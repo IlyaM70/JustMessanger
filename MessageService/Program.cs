@@ -13,17 +13,33 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("https://localhost:7097")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+
+
 var app = builder.Build();
 
-app.MapHub<MessagesHub>("/messagesHub");
 
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
+app.UseRouting();
+app.UseCors(); // Call this *before* app.UseAuthorization()
+
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<MessagesHub>("/messagesHub");
 
 app.Run();

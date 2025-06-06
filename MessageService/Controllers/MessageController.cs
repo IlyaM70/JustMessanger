@@ -36,8 +36,7 @@ namespace MessageService.Controllers
             await _db.SaveChangesAsync();
 
             // 2) Push over SignalR
-            await _hub.Clients
-                      .User(dto.RecipientId)
+            await _hub.Clients.All
                       .SendAsync("ReceiveMessage", new
                       {
                           msg.Id,
