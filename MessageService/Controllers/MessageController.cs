@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using MessageService.Models;
 using System.ComponentModel.DataAnnotations;
+using MessageService.Models.Dtos;
 
 namespace MessageService.Controllers
 {
@@ -49,13 +50,5 @@ namespace MessageService.Controllers
         }
     }
 
-    public class SendMessageDto
-    {
-        [Required]
-        public string? SenderId { get; set; }
-        [Required]
-        public string? RecipientId { get; set; }
-        [Required]
-        public string? Text { get; set; }
-    }
+
 }
