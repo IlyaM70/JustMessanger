@@ -1,132 +1,168 @@
-﻿<style>
+﻿
+<style>
     body { font-family: Arial; padding: 1rem; }
     #messages { border: 1px solid #ccc; height: 200px; overflow-y: auto; margin-bottom: 1rem; padding: 0.5rem; }
     .hidden { display: none; }
     label { display: block; margin-top: 0.5rem; }
 
-    #messages div.you
-    {
-    text-align: right;
-    color: #0a84ff;
+    #messages div.you {
+        text-align: right;
+        color: #0a84ff;
     }
 
-    #messages div.them
-    {
-    text-align: left;
-    color: #444;
+    #messages div.them {
+        text-align: left;
+        color: #444;
     }
-</style> 
+
+    #messages div.timestamp {
+        font-size: 0.75em;
+        color: #888;
+    }
+</style>
 
 <h1>Just Messenger</h1>
 
-<!-- Step 1: Gather User & Recipient IDs -->
+<!-- Login Pane -->
 <div id="loginPane">
     <label>
-        Your User ID: 
-        <input id="userIdInput" placeholder="e.g. 1, 2 or 3" />
+        Your User ID:
+        <input id="userIdInput" placeholder="1, 2 or 3"/>
     </label>
     <label>
-        Recipient ID: 
-        <input id="recipientIdInput" placeholder="e.g. 1, 2 or 3" />
+        Recipient ID:
+        <input id="recipientIdInput" placeholder="1, 2 or 3"/>
     </label>
     <button id="connectBtn">Connect</button>
 </div>
 
-<!-- Step 2: Chat UI (hidden until connected) -->
+<!-- Chat Pane -->
 <div id="chatPane" class="hidden">
     <div id="messages"></div>
-    <input id="msgInput" placeholder="Type a message…" />
+    <input id="msgInput" placeholder="Type a message…"/>
     <button id="sendBtn">Send</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@@latest/dist/browser/signalr.min.js"></script>
 <script>
-const API_BASE = "https://localhost:7136";
-let connection, userId, recipientId;
+    const API_BASE = "https://localhost:7136";
+    let connection, userId, recipientId;
 
-document.getElementById("connectBtn").addEventListener("click", async () => {
-    // Read and validate IDs
-    userId = document.getElementById("userIdInput").value.trim();
-    recipientId = document.getElementById("recipientIdInput").value.trim();
-    if (!userId || !recipientId) {
-    alert("Both User ID and Recipient ID are required");
-    return;
+    document.getElementById("connectBtn").addEventListener("click", connect);
+    document.getElementById("sendBtn").addEventListener("click", sendMessage);
+
+    async function connect() {
+        userId = document.getElementById("userIdInput").value.trim();
+        recipientId = document.getElementById("recipientIdInput").value.trim();
+        if (!userId || !recipientId) {
+            alert("Both User ID and Recipient ID are required");
+            return;
+        }
+
+        setupConnection();
+        try {
+            await connection.start();
+            await loadHistory();
+            togglePanes();
+        }
+        catch (err) {
+            console.error(err);
+            alert("Connection failed");
+        }
     }
 
-    // Build and start the SignalR connection
-    connection = new signalR.HubConnectionBuilder()
-    .withUrl(`${API_BASE}/messagesHub?userId=${encodeURIComponent(userId)}`)
-    .withAutomaticReconnect()
-    .build();
+    function setupConnection() {
+        connection = new signalR.HubConnectionBuilder()
+        .withUrl(`${API_BASE}/messagesHub?userId=${encodeURIComponent(userId)}`)
+        .withAutomaticReconnect()
+        .build();
 
-    // Handle incoming messages
-    connection.on("ReceiveMessage", msg => {
-    const div = document.createElement("div");
-    div.textContent = `${msg.senderId}: ${msg.text}`;
-    document.getElementById("messages").appendChild(div);
-    document.getElementById("messages").scrollTop = 
-        document.getElementById("messages").scrollHeight;
-    });
-
-    try {
-    await connection.start();
-    console.log("Connected as user", userId);
-    } catch (err) {
-    console.error(err);
-    alert("Connection failed");
-    return;
+        connection.on("ReceiveMessage", displayReceivedMessage);
     }
 
-    // Show chat UI
-    document.getElementById("loginPane").classList.add("hidden");
-    document.getElementById("chatPane").classList.remove("hidden");
-});
-
-// Send a message
-document.getElementById("sendBtn").addEventListener("click", async () => {
-    const text = document.getElementById("msgInput").value.trim();
-    if (!text) return;
-
-    const message = {
-    senderId: userId,
-    recipientId,
-    text
-    };
-
-    try {
-    await fetch(`${API_BASE}/api/message/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(message)
-    });
-
-    // Show sent message immediately
-    const div = document.createElement("div");
-    div.textContent = `You: ${message.text}`;
-    div.style.textAlign = "right";
-    document.getElementById("messages").appendChild(div);
-    document.getElementById("messages").scrollTop = 
-        document.getElementById("messages").scrollHeight;
-
-    document.getElementById("msgInput").value = "";
-    } catch (err) {
-    console.error("Send failed", err);
+    async function loadHistory() {
+        try {
+        const url = `${API_BASE}/api/message/history?userId=${userId}&otherUserId=${recipientId}`;
+        const res = await fetch(url);
+        const history = await res.json();
+        clearMessages();
+        history.forEach(msg => {
+            const isMine = msg.senderId === userId;
+            const div = createMessageDiv(msg.text, isMine, msg.senderId);
+            const ts  = createTimestampDiv(msg.sentAt);
+            appendMessage(div, ts);
+        });
+        scrollToBottom();
+        } catch (err) {
+        console.error("Failed to load history:", err);
+        }
     }
-});
 
-// For sent
-const div = document.createElement("div");
-div.className = "you";
-div.textContent = `You: ${message.text}`;
-document.getElementById("messages").appendChild(div);
+    async function sendMessage() {
+        const text = document.getElementById("msgInput").value.trim();
+        if (!text) return;
 
-// For received
-connection.on("ReceiveMessage", msg => {
-  if (msg.senderId === userId) return; // avoid duplicate if echoed
+        const message = { senderId: userId, recipientId, text };
+        try {
+        await fetch(`${API_BASE}/api/message/send`, {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify(message)
+        });
+        displaySentMessage(text);
+        } catch (err) {
+        console.error("Send failed", err);
+        }
+    }
 
-  const div = document.createElement("div");
-  div.className = "them";
-  div.textContent = `${msg.senderId}: ${msg.text}`;
-  document.getElementById("messages").appendChild(div);
-});
+    function displaySentMessage(text) {
+        const div = createMessageDiv(text, true);
+        const ts  = createTimestampDiv(new Date().toISOString());
+        appendMessage(div, ts);
+        scrollToBottom();
+        document.getElementById("msgInput").value = "";
+    }
+
+    function displayReceivedMessage(msg) {
+        if (msg.senderId === userId) return; // already shown
+        const div = createMessageDiv(msg.text, false, msg.senderId);
+        const ts  = createTimestampDiv(msg.sentAt);
+        appendMessage(div, ts);
+        scrollToBottom();
+    }
+
+    function createMessageDiv(text, isMine, sender = "You") {
+        const div = document.createElement("div");
+        div.className = isMine ? "you" : "them";
+        div.textContent = `${isMine ? "You" : sender}: ${text}`;
+        return div;
+    }
+
+    function createTimestampDiv(isoString) {
+        const time = new Date(isoString).toLocaleTimeString();
+        const div  = document.createElement("div");
+        div.className = "timestamp";
+        div.textContent = time;
+        return div;
+    }
+
+    function appendMessage(...elements) {
+        const container = document.getElementById("messages");
+        elements.forEach(el => container.appendChild(el));
+    }
+
+    function clearMessages() {
+        document.getElementById("messages").innerHTML = "";
+    }
+
+    function scrollToBottom() {
+        const container = document.getElementById("messages");
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function togglePanes() {
+        document.getElementById("loginPane").classList.add("hidden");
+        document.getElementById("chatPane").classList.remove("hidden");
+    }
 </script>
+
