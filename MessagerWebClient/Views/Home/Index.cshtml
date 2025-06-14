@@ -1,57 +1,81 @@
-﻿<!-- 1) Container for messages -->
-<div id="messages"
-	 style="border:1px solid #ccc;
-              height:300px;
-              overflow-y:auto;
-              padding:8px;
-              margin-bottom:8px;">
-</div>
+﻿ <h1>Just Messenger</h1>
 
-<input id="msgInput" placeholder="Type a message…" />
-<button id="sendBtn">Send</button>
+  <!-- Step 1: Gather User & Recipient IDs -->
+  <div id="loginPane">
+    <label>
+      Your User ID: 
+      <input id="userIdInput" placeholder="e.g. 1, 2 or 3" />
+    </label>
+    <label>
+      Recipient ID: 
+      <input id="recipientIdInput" placeholder="e.g. 1, 2 or 3" />
+    </label>
+    <button id="connectBtn">Connect</button>
+  </div>
 
-<!-- SignalR client -->
-<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@@latest/dist/browser/signalr.min.js"></script>
-<script>
-	const API_BASE = "https://localhost:7136";
+  <!-- Step 2: Chat UI (hidden until connected) -->
+  <div id="chatPane" class="hidden">
+    <div id="messages"></div>
+    <input id="msgInput" placeholder="Type a message…" />
+    <button id="sendBtn">Send</button>
+  </div>
 
-			// 2) Build the connection
-			const connection = new signalR.HubConnectionBuilder()
-				.withUrl(`${API_BASE}/messagesHub`)
-			.withAutomaticReconnect()
-				.build();
+  <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@@latest/dist/browser/signalr.min.js"></script>
+  <script>
+    const API_BASE = "https://localhost:7136";
+    let connection, userId, recipientId;
 
-			// 3) When a message arrives, append it to the #messages div
-			connection.on("ReceiveMessage", (msg) => {
-			  const container = document.getElementById("messages");
-			const el = document.createElement("div");
-			el.textContent = `${msg.senderId}: ${msg.text}`;  // adjust if your payload differs
-			container.appendChild(el);
+    document.getElementById("connectBtn").addEventListener("click", async () => {
+      // Read and validate IDs
+      userId = document.getElementById("userIdInput").value.trim();
+      recipientId = document.getElementById("recipientIdInput").value.trim();
+      if (!userId || !recipientId) {
+        alert("Both User ID and Recipient ID are required");
+        return;
+      }
 
-			  // scroll down to newest
-			container.scrollTop = container.scrollHeight;
-			});
+      // Build and start the SignalR connection
+      connection = new signalR.HubConnectionBuilder()
+        .withUrl(`${API_BASE}/messagesHub?userId=${encodeURIComponent(userId)}`)
+        .withAutomaticReconnect()
+        .build();
 
-		// 4) Start SignalR
-			connection.start()
-		  .then(() => console.log("Connected to hub"))
-			  .catch(err => console.error(err));
+      // Handle incoming messages
+      connection.on("ReceiveMessage", msg => {
+        const div = document.createElement("div");
+        div.textContent = `${msg.senderId}: ${msg.text}`;
+        document.getElementById("messages").appendChild(div);
+        document.getElementById("messages").scrollTop = 
+          document.getElementById("messages").scrollHeight;
+      });
 
-			// 5) Wire up the Send button
-			document.getElementById("sendBtn").addEventListener("click", async () => {
-			  const text = document.getElementById("msgInput").value.trim();
-		  if (!text) return;
+      try {
+        await connection.start();
+        console.log("Connected as user", userId);
+      } catch (err) {
+        console.error(err);
+        alert("Connection failed");
+        return;
+      }
 
-			await fetch(`${API_BASE}/api/message/send`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-				  senderId: "alice",       // replace with actual user ID
-				  recipientId: "bob",      // replace with actual recipient
-				  text
-				})
-			  });
+      // Show chat UI
+      document.getElementById("loginPane").classList.add("hidden");
+      document.getElementById("chatPane").classList.remove("hidden");
+    });
 
-			  document.getElementById("msgInput").value = "";
-			});
-</script>
+    // Send a message
+    document.getElementById("sendBtn").addEventListener("click", async () => {
+      const text = document.getElementById("msgInput").value.trim();
+      if (!text) return;
+      try {
+        await fetch(`${API_BASE}/api/message/send`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ senderId: userId, recipientId, text })
+        });
+        document.getElementById("msgInput").value = "";
+      } catch (err) {
+        console.error("Send failed", err);
+      }
+    });
+  </script>

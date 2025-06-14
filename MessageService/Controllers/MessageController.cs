@@ -34,15 +34,16 @@ namespace MessageService.Controllers
             _db.Messages.Add(msg);
             await _db.SaveChangesAsync();
 
-            // 2) Push over SignalR
-            await _hub.Clients.All
-                      .SendAsync("ReceiveMessage", new
-                      {
-                          msg.Id,
-                          msg.SenderId,
-                          msg.Text,
-                          msg.SentAt
-                      });
+            // 2) Push over SignalR only to the recipient
+            await _hub.Clients
+                .Group(dto.RecipientId!) // sends only to the connections in that group
+                .SendAsync("ReceiveMessage", new
+                {
+                    msg.Id,
+                    msg.SenderId,
+                    msg.Text,
+                    msg.SentAt
+                });
 
             return Ok();
         }
