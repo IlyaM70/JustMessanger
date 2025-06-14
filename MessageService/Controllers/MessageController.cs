@@ -3,7 +3,6 @@ using MessageService.Hubs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using MessageService.Models;
-using System.ComponentModel.DataAnnotations;
 using MessageService.Models.Dtos;
 
 namespace MessageService.Controllers

@@ -365,3 +365,5 @@ FodyWeavers.xsd
 # Ignore ASP.NET Core appsettings
 appsettings.json
 appsettings.Development.json
+appsetting.Production.json
+/MessageService/appsettings.Production.json
