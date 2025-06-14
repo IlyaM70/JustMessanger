@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using MessageService.Models;
 using MessageService.Models.Dtos;
+using Microsoft.EntityFrameworkCore;
 
 namespace MessageService.Controllers
 {
@@ -11,7 +12,8 @@ namespace MessageService.Controllers
     [ApiController]
     public class MessageController : ControllerBase
     {
-        private readonly MessageDbContext _db;
+		#region ctor
+		private readonly MessageDbContext _db;
         private readonly IHubContext<MessagesHub> _hub;
 
         public MessageController(MessageDbContext db, IHubContext<MessagesHub> hub)
@@ -19,8 +21,10 @@ namespace MessageService.Controllers
             _db = db;
             _hub = hub;
         }
+		#endregion
 
-        [HttpPost("send")]
+		#region send
+		[HttpPost("send")]
         public async Task<IActionResult> Send([FromBody] SendMessageDto dto)
         {
             // 1) Persist
@@ -47,7 +51,29 @@ namespace MessageService.Controllers
 
             return Ok();
         }
-    }
+		#endregion
+
+		#region history
+		[HttpGet("history")]
+		public async Task<IActionResult> GetHistory([FromQuery] string userId, [FromQuery] string otherUserId)
+		{
+			var messages = await _db.Messages
+				.Where(m =>
+					(m.SenderId == userId && m.RecipientId == otherUserId) ||
+					(m.SenderId == otherUserId && m.RecipientId == userId))
+				.OrderBy(m => m.SentAt)
+				.ToListAsync();
+
+			return Ok(messages.Select(m => new {
+				m.Id,
+				m.SenderId,
+				m.RecipientId,
+				m.Text,
+				m.SentAt
+			}));
+		}
+		#endregion
+	}
 
 
 }
