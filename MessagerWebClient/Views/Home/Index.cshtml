@@ -5,13 +5,19 @@
     .hidden { display: none; }
     label { display: block; margin-top: 0.5rem; }
 
+    #messages .message-container {
+      display: flex;
+      flex-direction:column;
+      margin-bottom: 0.25rem;      
+    }
+
+
     #messages div.you {
-        text-align: right;
+        text-align:end;
         color: #0a84ff;
     }
 
     #messages div.them {
-        text-align: left;
         color: #444;
     }
 
@@ -19,6 +25,7 @@
         font-size: 0.75em;
         color: #888;
     }
+
 </style>
 
 <h1>Just Messenger</h1>
@@ -87,11 +94,21 @@
         const history = await res.json();
         clearMessages();
         history.forEach(msg => {
-            const isMine = msg.senderId === userId;
-            const div = createMessageDiv(msg.text, isMine, msg.senderId);
-            const ts  = createTimestampDiv(msg.sentAt);
-            appendMessage(div, ts);
+          const isMine = msg.senderId === userId;
+          const msgDiv = createMessageDiv(msg.text, isMine, isMine ? "You" : msg.senderId);
+          const tsDiv  = createTimestampDiv(msg.sentAt);
+          appendMessageWithTimestamp(msgDiv, tsDiv, isMine);
         });
+
+        // In displaySentMessage:
+        const sentDiv = createMessageDiv(text, true);
+        const sentTs  = createTimestampDiv(new Date().toISOString());
+        appendMessageWithTimestamp(sentDiv, sentTs, true);
+
+        // In displayReceivedMessage:
+        const recvDiv = createMessageDiv(msg.text, false, msg.senderId);
+        const recvTs  = createTimestampDiv(msg.sentAt);
+        appendMessageWithTimestamp(recvDiv, recvTs, false);
         scrollToBottom();
         } catch (err) {
         console.error("Failed to load history:", err);
@@ -139,16 +156,27 @@
     }
 
     function createTimestampDiv(isoString) {
-        const time = new Date(isoString).toLocaleTimeString();
+        const time = new Date(isoString).toLocaleString();
         const div  = document.createElement("div");
         div.className = "timestamp";
         div.textContent = time;
         return div;
     }
 
-    function appendMessage(...elements) {
-        const container = document.getElementById("messages");
-        elements.forEach(el => container.appendChild(el));
+    function appendMessageWithTimestamp(messageDiv, timestampDiv, isMine) {
+        const wrapper = document.createElement("div");
+        wrapper.className = `message-container ${isMine ? "you" : "them"}`;
+
+      // For "you", show message then timestamp; for "them", timestamp then message if desired
+      if (isMine) {
+        wrapper.appendChild(messageDiv);
+        wrapper.appendChild(timestampDiv);
+      } else {
+        wrapper.appendChild(messageDiv);
+        wrapper.appendChild(timestampDiv);
+      }
+
+      document.getElementById("messages").appendChild(wrapper);
     }
 
     function clearMessages() {
