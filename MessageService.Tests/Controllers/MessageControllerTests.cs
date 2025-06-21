@@ -13,32 +13,32 @@ using Microsoft.AspNetCore.Mvc;
 
 public class MessageControllerTests
 {
+	#region Send_Should_AddMessageToDatabase()
 	[Fact]
 	public async Task Send_Should_AddMessageToDatabase()
 	{
-		// 1) Arrange: create in‑memory DbContext
+		#region Arrange
+		//Arrange: create in‑memory DbContext
 		var options = new DbContextOptionsBuilder<MessageDbContext>()
 			.UseInMemoryDatabase("PersistTestDb")
 			.Options;
 		await using var db = new MessageDbContext(options);
 
-		// 2) Arrange: mock IHubContext but ignore calls
-		var hubContextMock = new Mock<IHubContext<MessagesHub>>();
+		//Arrange: mock IHubContext
+		var hubContext = new Mock<IHubContext<MessagesHub>>();
+		var clients = new Mock<IHubClients>();
+		var clientProxy = new Mock<IClientProxy>();
 
-		var mockHubContext = new Mock<IHubContext<MessagesHub>>();
-		var mockClients = new Mock<IHubClients>();
-		var mockClientProxy = new Mock<IClientProxy>();
-
-		mockClients
+		clients
 			.Setup(c => c.Group(It.IsAny<string>()))
-			.Returns(mockClientProxy.Object);
+			.Returns(clientProxy.Object);
 
-		mockHubContext
+		hubContext
 			.Setup(h => h.Clients)
-			.Returns(mockClients.Object);
+			.Returns(clients.Object);
 
-		mockClientProxy
-			.Setup(p => p.SendAsync(
+		clientProxy
+			.Setup(p => p.SendCoreAsync(
 				It.IsAny<string>(),
 				It.IsAny<object[]>(),
 				It.IsAny<CancellationToken>())
@@ -46,9 +46,8 @@ public class MessageControllerTests
 			.Returns(Task.CompletedTask);
 
 
-
-		// 3) Act: call Send()
-		var controller = new MessageController(db, hubContextMock.Object);
+		//Arrange controller and message dto
+		var controller = new MessageController(db, hubContext.Object);
 
 		var dto = new SendMessageDto
 		{
@@ -56,13 +55,15 @@ public class MessageControllerTests
 			RecipientId = "2",
 			Text = "Hello Persistence"
 		};
+		#endregion
 
+		//Act: call Send()
 		var result = await controller.Send(dto);
 
-		// 4) Assert: method returned OkResult
+		//Assert: method returned OkResult
 		Assert.IsType<OkResult>(result);
 
-		// 5) Assert: database contains exactly one message
+		// Assert: database contains exactly one message
 		var messages = await db.Messages.ToListAsync();
 		Assert.Single(messages);
 
@@ -71,8 +72,9 @@ public class MessageControllerTests
 		Assert.Equal("2", saved.RecipientId);
 		Assert.Equal("Hello Persistence", saved.Text);
 
-		// 6) Assert: SentAt is recent (within last 5 seconds)
+		//Assert: SentAt is recent (within last 5 seconds)
 		Assert.InRange((DateTime.UtcNow - saved.SentAt).TotalSeconds, 0, 5);
 	}
+	#endregion
 
 }
