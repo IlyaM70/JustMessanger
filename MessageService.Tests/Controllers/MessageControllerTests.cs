@@ -10,6 +10,7 @@ using MessageService.Models;
 using MessageService.Models.Dtos;
 using MessageService.Hubs;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 public class MessageControllerTests
 {
@@ -76,5 +77,76 @@ public class MessageControllerTests
 		Assert.InRange((DateTime.UtcNow - saved.SentAt).TotalSeconds, 0, 5);
 	}
 	#endregion
+
+	#region Send_Should_SendMessageViaSignalR_WithCorrectPayload()
+	[Fact]
+	public async Task Send_Should_SendMessageViaSignalR_WithCorrectPayload()
+	{
+		#region Arrange
+		var options = new DbContextOptionsBuilder<MessageDbContext>()
+			.UseInMemoryDatabase("SignalRTestDb")
+			.Options;
+		await using var db = new MessageDbContext(options);
+
+		var hubContext = new Mock<IHubContext<MessagesHub>>();
+		var clients = new Mock<IHubClients>();
+		var clientProxy = new Mock<IClientProxy>();
+
+		object[]? capturedPayload = null;
+
+		clientProxy
+			.Setup(p => p.SendCoreAsync(
+				"ReceiveMessage",
+				It.IsAny<object[]>(),
+				It.IsAny<CancellationToken>()))
+			.Callback<string, object[], CancellationToken>((_, args, _) =>
+			{
+				capturedPayload = args;
+			})
+			.Returns(Task.CompletedTask);
+
+		clients
+			.Setup(c => c.Group("2"))
+			.Returns(clientProxy.Object);
+
+		hubContext
+			.Setup(h => h.Clients)
+			.Returns(clients.Object);
+
+		var controller = new MessageController(db, hubContext.Object);
+
+		var dto = new SendMessageDto
+		{
+			SenderId = "1",
+			RecipientId = "2",
+			Text = "Hello Test"
+		};
+		#endregion
+
+		// Act
+		var result = await controller.Send(dto);
+
+		// Assert: SignalR push happened once to group "2"
+		clients.Verify(c => c.Group("2"), Times.Once);
+		clientProxy.Verify(p =>
+			p.SendCoreAsync("ReceiveMessage", It.IsAny<object[]>(), It.IsAny<CancellationToken>()),
+			Times.Once);
+
+		// Assert: payload was captured and contains expected values
+		Assert.NotNull(capturedPayload);
+		Assert.Single(capturedPayload);
+
+		var payload = capturedPayload![0]!;
+		var json = JsonSerializer.Serialize(payload);
+		var deserialized = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+
+		Assert.NotNull(deserialized);
+		Assert.Equal("1", deserialized!["SenderId"].GetString());
+		Assert.Equal("Hello Test", deserialized["Text"].GetString());
+		Assert.True(deserialized["Id"].GetInt32() > 0);
+		Assert.True(deserialized["SentAt"].GetDateTime() <= DateTime.UtcNow);
+	}
+	#endregion
+
 
 }
