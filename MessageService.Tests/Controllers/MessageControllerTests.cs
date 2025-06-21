@@ -148,5 +148,52 @@ public class MessageControllerTests
 	}
 	#endregion
 
+	#region Send_Should_Return_OkResult_On_Success()
+	[Fact]
+	public async Task Send_Should_Return_OkResult_On_Success()
+	{
+		#region Arrange
+		var options = new DbContextOptionsBuilder<MessageDbContext>()
+			.UseInMemoryDatabase("TestDb_OkReturn")
+			.Options;
+
+		await using var db = new MessageDbContext(options);
+
+		var hubContext = new Mock<IHubContext<MessagesHub>>();
+		var clients = new Mock<IHubClients>();
+		var clientProxy = new Mock<IClientProxy>();
+
+		clients
+			.Setup(c => c.Group(It.IsAny<string>()))
+			.Returns(clientProxy.Object);
+
+		hubContext
+			.Setup(h => h.Clients)
+			.Returns(clients.Object);
+
+		clientProxy
+			.Setup(p => p.SendCoreAsync(
+				It.IsAny<string>(),
+				It.IsAny<object[]>(),
+				It.IsAny<CancellationToken>()))
+			.Returns(Task.CompletedTask);
+
+		var controller = new MessageController(db, hubContext.Object);
+
+		var dto = new SendMessageDto
+		{
+			SenderId = "user1",
+			RecipientId = "user2",
+			Text = "Testing return value"
+		};
+		#endregion
+
+		// Act
+		var result = await controller.Send(dto);
+
+		// Assert
+		Assert.IsType<OkResult>(result);
+	}
+	#endregion
 
 }
