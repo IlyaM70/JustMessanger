@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.SignalR;
 using MessageService.Models;
 using MessageService.Models.Dtos;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace MessageService.Controllers
 {
@@ -27,8 +28,44 @@ namespace MessageService.Controllers
 		[HttpPost("send")]
         public async Task<IActionResult> Send([FromBody] SendMessageDto dto)
         {
-            // 1) Persist
-            Message msg = new Message()
+			# region Validate
+			if (string.IsNullOrEmpty(dto.SenderId))
+            {
+                return BadRequest("ERROR: SenderId is empty");
+            }
+
+			if (string.IsNullOrEmpty(dto.RecipientId))
+			{
+				return BadRequest("ERROR: RecipientId is empty");
+			}
+
+			if (string.IsNullOrEmpty(dto.Text))
+			{
+				return BadRequest("ERROR: Text of message is empty");
+			}
+
+			if (!ModelState.IsValid)
+			{
+				IEnumerable<ModelError> allErrors = ModelState.Values.SelectMany(v => v.Errors);
+				return BadRequest(allErrors);
+			}
+
+			User? sender = await _db.Users.FirstOrDefaultAsync(x=>x.Id.Equals(dto.SenderId));
+			if (sender == null)
+			{
+				return NotFound("ERROR: Sender with given ID was not found in the database");
+			}
+
+			User? recipient = await _db.Users.FirstOrDefaultAsync(x => x.Id.Equals(dto.RecipientId));
+			if (recipient == null)
+			{
+				return NotFound("ERROR: Recipient with given ID was not found in the database");
+			}
+
+			#endregion
+
+			//Persist
+			Message msg = new Message()
             {
                 SenderId = dto.SenderId,
                 RecipientId = dto.RecipientId,
@@ -38,7 +75,7 @@ namespace MessageService.Controllers
             _db.Messages.Add(msg);
             await _db.SaveChangesAsync();
 
-            // 2) Push over SignalR only to the recipient
+            //Push over SignalR only to the recipient
             await _hub.Clients
                 .Group(dto.RecipientId!) // sends only to the connections in that group
                 .SendAsync("ReceiveMessage", new
