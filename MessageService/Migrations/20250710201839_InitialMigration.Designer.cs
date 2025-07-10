@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MessageService.Migrations
 {
     [DbContext(typeof(MessageDbContext))]
-    [Migration("20250614194232_AddUserTable")]
-    partial class AddUserTable
+    [Migration("20250710201839_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -52,33 +52,30 @@ namespace MessageService.Migrations
 
             modelBuilder.Entity("MessageService.Models.User", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Username")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("User");
+                    b.ToTable("Users");
 
                     b.HasData(
                         new
                         {
-                            Id = 1,
+                            Id = "1",
                             Username = "Bob"
                         },
                         new
                         {
-                            Id = 2,
+                            Id = "2",
                             Username = "Charlie"
                         },
                         new
                         {
-                            Id = 3,
+                            Id = "3",
                             Username = "Karla"
                         });
                 });

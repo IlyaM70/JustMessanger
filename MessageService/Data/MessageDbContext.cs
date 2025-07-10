@@ -12,9 +12,9 @@ namespace MessageService.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>().HasData(
-                new User { Id = 1, Username="Bob" },
-                new User { Id = 2, Username="Charlie" },
-                new User { Id = 3, Username = "Karla" }
+                new User { Id = "1", Username="Bob" },
+                new User { Id = "2", Username="Charlie" },
+                new User { Id = "3", Username = "Karla" }
             );
         }
 
