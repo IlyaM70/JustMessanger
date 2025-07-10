@@ -1,6 +1,7 @@
 ﻿using MessageService.Controllers;
 using MessageService.Data;
 using MessageService.Hubs;
+using MessageService.Models;
 using MessageService.Models.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -22,6 +23,10 @@ namespace MessageService.Tests.Controllers.Messages
 				.UseInMemoryDatabase("PersistTestDb")
 				.Options;
 			await using var db = new MessageDbContext(options);
+
+			await db.Users.AddAsync(new User { Id = "1", Username = "Sender" });
+			await db.Users.AddAsync(new User { Id = "2", Username = "Recipient" });
+			await db.SaveChangesAsync();
 
 			//Arrange: mock IHubContext
 			var hubContext = new Mock<IHubContext<MessagesHub>>();
@@ -82,6 +87,10 @@ namespace MessageService.Tests.Controllers.Messages
 				.UseInMemoryDatabase("SignalRTestDb")
 				.Options;
 			await using var db = new MessageDbContext(options);
+
+			await db.Users.AddAsync(new User { Id = "1", Username = "Sender" });
+			await db.Users.AddAsync(new User { Id = "2", Username = "Recipient" });
+			await db.SaveChangesAsync();
 
 			var hubContext = new Mock<IHubContext<MessagesHub>>();
 			var clients = new Mock<IHubClients>();
@@ -154,6 +163,10 @@ namespace MessageService.Tests.Controllers.Messages
 
 			await using var db = new MessageDbContext(options);
 
+			await db.Users.AddAsync(new User { Id = "1", Username = "Sender" });
+			await db.Users.AddAsync(new User { Id = "2", Username = "Recipient" });
+			await db.SaveChangesAsync();
+
 			var hubContext = new Mock<IHubContext<MessagesHub>>();
 			var clients = new Mock<IHubClients>();
 			var clientProxy = new Mock<IClientProxy>();
@@ -177,8 +190,8 @@ namespace MessageService.Tests.Controllers.Messages
 
 			var dto = new SendMessageDto
 			{
-				SenderId = "user1",
-				RecipientId = "user2",
+				SenderId = "1",
+				RecipientId = "2",
 				Text = "Testing return value"
 			};
 			#endregion
