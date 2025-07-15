@@ -109,5 +109,67 @@ namespace MessageService.Tests.Controllers.Messages
 
 		}
 		#endregion
+
+		#region History_Should_Return_BadRequest_On_ValidationFailure
+		[Fact]
+		public async Task History_Should_Return_BadRequest_On_ValidationFailure()
+		{
+			#region Arrange
+			var options = new DbContextOptionsBuilder<MessageDbContext>()
+				.UseInMemoryDatabase("testdb-history-badrequest")
+				.Options;
+
+			await using var db = new MessageDbContext(options);
+
+			await db.Users.AddAsync(new User { Id = "1", Username = "Sender" });
+			await db.Users.AddAsync(new User { Id = "2", Username = "Recipient" });
+			await db.SaveChangesAsync();
+
+			var hubContext = new Mock<IHubContext<MessagesHub>>();
+			var clients = new Mock<IHubClients>();
+			var clientProxy = new Mock<IClientProxy>();
+
+			clients
+				.Setup(c => c.Group(It.IsAny<string>()))
+				.Returns(clientProxy.Object);
+
+			hubContext
+				.Setup(h => h.Clients)
+				.Returns(clients.Object);
+
+			clientProxy
+				.Setup(p => p.SendCoreAsync(
+					It.IsAny<string>(),
+					It.IsAny<object[]>(),
+					It.IsAny<CancellationToken>()))
+				.Returns(Task.CompletedTask);
+
+			var controller = new MessageController(db, hubContext.Object);
+
+			db.Messages.AddRange(
+				  new Message { SenderId = "A", RecipientId = "B", Text = "A→B", SentAt = DateTime.Now.AddMinutes(1) },
+				  new Message { SenderId = "B", RecipientId = "A", Text = "B→A", SentAt = DateTime.Now.AddMinutes(2) },
+				  new Message { SenderId = "A", RecipientId = "B", Text = "A→B(2)", SentAt = DateTime.Now.AddMinutes(3) },
+				  new Message { SenderId = "B", RecipientId = "A", Text = "B→A(2)", SentAt = DateTime.Now.AddMinutes(4) },
+				  // “noise” messages
+				  new Message { SenderId = "A", RecipientId = "C", Text = "A→C", SentAt = DateTime.Now.AddMinutes(1) },
+				  new Message { SenderId = "C", RecipientId = "A", Text = "C→A", SentAt = DateTime.Now.AddMinutes(2) },
+				  new Message { SenderId = "A", RecipientId = "C", Text = "A→C(2)", SentAt = DateTime.Now.AddMinutes(3) },
+				  new Message { SenderId = "C", RecipientId = "A", Text = "A→C (2)", SentAt = DateTime.Now.AddMinutes(4) }
+				);
+			#endregion
+
+			// Act
+			var result = await controller.GetHistory("", "B");
+			var result2 = await controller.GetHistory("A", "");
+			var result3 = await controller.GetHistory("", "");
+
+
+			// Assert
+			Assert.IsType<BadRequestObjectResult>(result);
+			Assert.IsType<BadRequestObjectResult>(result2);
+			Assert.IsType<BadRequestObjectResult>(result3);
+		}
+		#endregion
 	}
 }

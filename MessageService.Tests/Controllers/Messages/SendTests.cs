@@ -203,5 +203,144 @@ namespace MessageService.Tests.Controllers.Messages
 			Assert.IsType<OkResult>(result);
 		}
 		#endregion
+
+		#region Send_Should_Return_BadRequest_On_ValidationFailure
+		[Fact]
+		public async Task Send_Should_Return_BadRequest_On_ValidationFailure()
+		{
+			#region Arrange
+			var options = new DbContextOptionsBuilder<MessageDbContext>()
+				.UseInMemoryDatabase("testdb-badrequest")
+				.Options;
+
+			await using var db = new MessageDbContext(options);
+
+			await db.Users.AddAsync(new User { Id = "1", Username = "Sender" });
+			await db.Users.AddAsync(new User { Id = "2", Username = "Recipient" });
+			await db.SaveChangesAsync();
+
+			var hubContext = new Mock<IHubContext<MessagesHub>>();
+			var clients = new Mock<IHubClients>();
+			var clientProxy = new Mock<IClientProxy>();
+
+			clients
+				.Setup(c => c.Group(It.IsAny<string>()))
+				.Returns(clientProxy.Object);
+
+			hubContext
+				.Setup(h => h.Clients)
+				.Returns(clients.Object);
+
+			clientProxy
+				.Setup(p => p.SendCoreAsync(
+					It.IsAny<string>(),
+					It.IsAny<object[]>(),
+					It.IsAny<CancellationToken>()))
+				.Returns(Task.CompletedTask);
+
+			var controller = new MessageController(db, hubContext.Object);
+
+			var dto = new SendMessageDto
+			{
+				SenderId = "",
+				RecipientId = "",
+				Text = ""
+			};
+			var dto2 = new SendMessageDto
+			{
+				SenderId = "",
+				RecipientId = "2",
+				Text = "test"
+			};
+			var dto3 = new SendMessageDto
+			{
+				SenderId = "1",
+				RecipientId = "",
+				Text = "test"
+			};
+			var dto4 = new SendMessageDto
+			{
+				SenderId = "1",
+				RecipientId = "2",
+				Text = ""
+			};
+			#endregion
+
+			// Act
+			var result = await controller.Send(dto);
+			var result2 = await controller.Send(dto2);
+			var result3 = await controller.Send(dto3);
+			var result4 = await controller.Send(dto4);
+
+			// Assert
+			Assert.IsType<BadRequestObjectResult>(result);
+			Assert.IsType<BadRequestObjectResult>(result2);
+			Assert.IsType<BadRequestObjectResult>(result3);
+			Assert.IsType<BadRequestObjectResult>(result4);
+		}
+		#endregion
+
+		#region Send_Should_Return_NotFound_If_Sendrer_Or_Recipient_Not_Found
+		[Fact]
+		public async Task Send_Should_Return_NotFound_If_Sendrer_Or_Recipient_Not_Found()
+		{
+			#region Arrange
+			var options = new DbContextOptionsBuilder<MessageDbContext>()
+				.UseInMemoryDatabase("testdb-notfound")
+				.Options;
+
+			await using var db = new MessageDbContext(options);
+
+			await db.Users.AddAsync(new User { Id = "1", Username = "Sender" });
+			await db.Users.AddAsync(new User { Id = "2", Username = "Recipient" });
+			await db.SaveChangesAsync();
+
+			var hubContext = new Mock<IHubContext<MessagesHub>>();
+			var clients = new Mock<IHubClients>();
+			var clientProxy = new Mock<IClientProxy>();
+
+			clients
+				.Setup(c => c.Group(It.IsAny<string>()))
+				.Returns(clientProxy.Object);
+
+			hubContext
+				.Setup(h => h.Clients)
+				.Returns(clients.Object);
+
+			clientProxy
+				.Setup(p => p.SendCoreAsync(
+					It.IsAny<string>(),
+					It.IsAny<object[]>(),
+					It.IsAny<CancellationToken>()))
+				.Returns(Task.CompletedTask);
+
+			var controller = new MessageController(db, hubContext.Object);
+
+			var dto = new SendMessageDto
+			{
+				SenderId = "1",
+				RecipientId = "3",
+				Text = "test"
+			};
+			var dto2 = new SendMessageDto
+			{
+				SenderId = "3",
+				RecipientId = "1",
+				Text = "test"
+			};
+
+			#endregion
+
+			// Act
+			var result = await controller.Send(dto);
+			var result2 = await controller.Send(dto2);
+
+			// Assert
+			Assert.IsType<NotFoundObjectResult>(result);
+			Assert.IsType<NotFoundObjectResult>(result2);
+			;
+		}
+		#endregion
+
 	}
 }
