@@ -50,13 +50,13 @@ namespace MessageService.Controllers
 				return BadRequest(allErrors);
 			}
 
-			User? sender = await _db.Users.FirstOrDefaultAsync(x=>x.Id.Equals(dto.SenderId));
+			User? sender = await _db.Users.FirstOrDefaultAsync(x=>x.Id!.Equals(dto.SenderId));
 			if (sender == null)
 			{
 				return NotFound("ERROR: Sender with given ID was not found in the database");
 			}
 
-			User? recipient = await _db.Users.FirstOrDefaultAsync(x => x.Id.Equals(dto.RecipientId));
+			User? recipient = await _db.Users.FirstOrDefaultAsync(x => x.Id!.Equals(dto.RecipientId));
 			if (recipient == null)
 			{
 				return NotFound("ERROR: Recipient with given ID was not found in the database");
@@ -94,6 +94,16 @@ namespace MessageService.Controllers
 		[HttpGet("history")]
 		public async Task<IActionResult> GetHistory([FromQuery] string userId, [FromQuery] string otherUserId)
 		{
+			//Validate
+			if(string.IsNullOrEmpty(userId))
+			{
+				return BadRequest("ERROR: UserId is empty");
+			}
+			if (string.IsNullOrEmpty(otherUserId))
+			{
+				return BadRequest("ERROR: OtherUserId is empty");
+			}
+
 			var messages = await _db.Messages
 				.Where(m =>
 					(m.SenderId == userId && m.RecipientId == otherUserId) ||
@@ -101,13 +111,7 @@ namespace MessageService.Controllers
 				.OrderBy(m => m.SentAt)
 				.ToListAsync();
 
-			return Ok(messages.Select(m => new {
-				m.Id,
-				m.SenderId,
-				m.RecipientId,
-				m.Text,
-				m.SentAt
-			}));
+			return Ok(messages);
 		}
 		#endregion
 	}
