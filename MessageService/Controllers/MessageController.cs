@@ -73,10 +73,24 @@ namespace MessageService.Controllers
                 SentAt = DateTime.UtcNow
             };
             _db.Messages.Add(msg);
-            await _db.SaveChangesAsync();
 
-            //Push over SignalR only to the recipient
-            await _hub.Clients
+			//Save changes
+			try
+			{
+				await _db.SaveChangesAsync();
+
+			}
+			catch (DbUpdateException dbUpdateEx)
+			{
+				return StatusCode(500, $"ERROR: Database update failed: {dbUpdateEx.Message}");
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Unexpected ERROR: {ex.Message}");
+			}
+
+			//Push over SignalR only to the recipient
+			await _hub.Clients
                 .Group(dto.RecipientId!) // sends only to the connections in that group
                 .SendAsync("ReceiveMessage", new
                 {
@@ -104,12 +118,24 @@ namespace MessageService.Controllers
 				return BadRequest("ERROR: OtherUserId is empty");
 			}
 
-			var messages = await _db.Messages
+			List<Message>? messages = [];
+			try
+			{
+			messages = await _db.Messages
 				.Where(m =>
 					(m.SenderId == userId && m.RecipientId == otherUserId) ||
 					(m.SenderId == otherUserId && m.RecipientId == userId))
 				.OrderBy(m => m.SentAt)
 				.ToListAsync();
+			}
+			catch (InvalidOperationException ex)
+			{
+				return StatusCode(500, $"Database operation error: {ex.Message}");
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Unexpected error: {ex.Message}");
+			}
 
 			return Ok(messages);
 		}
