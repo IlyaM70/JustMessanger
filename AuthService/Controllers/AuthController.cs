@@ -1,7 +1,10 @@
 ﻿using AuthService.Data;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+
 
 namespace AuthService.Controllers
 {
@@ -12,10 +15,12 @@ namespace AuthService.Controllers
 		#region ctor
 		private readonly AuthDbContext _db;
 		private readonly UserManager<ApplicationUser> _userManager;
-		public AuthController(AuthDbContext db, UserManager<ApplicationUser> userManager)
+		private readonly IConfiguration _configuration;
+		public AuthController(AuthDbContext db, UserManager<ApplicationUser> userManager, IConfiguration configuration)
 		{
 			_db = db;
 			_userManager = userManager;
+			_configuration = configuration;
 		}
 		#endregion
 
@@ -98,12 +103,57 @@ namespace AuthService.Controllers
 			return Ok("Email confirmed successfully!");
 		}
 		#endregion
-		
 
-		//Login
-		//To do
+		#region Login
+		[HttpPost("login")]
+		public  IActionResult Login(string email,string password)
+		{
+			var user = _db.Users.FirstOrDefault(u => u.Email == email);
+			if (user == null)
+			{
+				return BadRequest("Invalid email or password.");
+			}
+			bool passwordValid = _userManager.CheckPasswordAsync(user, password).Result;
+			if (!passwordValid)
+			{
+				return BadRequest("Invalid email or password.");
+			}
 
-		//Logout
-		//to do
+			//Issie a JWT
+			string token = GenerateToken(user);
+
+
+			return Ok(new {token});
+		}
+		#endregion
+
+		#region GenerateToken
+		private string GenerateToken(ApplicationUser user)
+		{
+			//claims
+			var claims = new[]
+			{
+				new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+				new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+				new Claim(JwtRegisteredClaimNames.Email, user.Email),
+				new Claim("uid", user.Id)
+			};
+
+			//key+credentials
+			var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+			var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+			//token
+			var token = new JwtSecurityToken(
+				issuer: _configuration["Jwt:Issuer"],
+				audience: _configuration["Jwt:Audience"],
+				claims: claims,
+				expires: DateTime.Now.AddDays(7),
+				signingCredentials: creds
+				);
+			return new JwtSecurityTokenHandler().WriteToken(token);
+		}
+		#endregion
+
 	}
 }
