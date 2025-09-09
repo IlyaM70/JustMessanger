@@ -43,6 +43,56 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+//seed users
+using (var scope = app.Services.CreateScope())
+{
+	var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+	// ensure DB is created
+	var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+	db.Database.Migrate();
+
+	// create user if not exists
+	var bob = await userManager.FindByEmailAsync("bob@test.com");
+	if (bob == null)
+	{
+		var user = new ApplicationUser
+		{
+			UserName = "Bob",
+			Email = "bob@test.com",
+			EmailConfirmed = true
+		};
+		await userManager.CreateAsync(user, "Bob123!");
+
+	}
+
+	var charlie = await userManager.FindByEmailAsync("charlie@test.com");
+	if (charlie == null)
+	{
+		var user = new ApplicationUser
+		{
+			UserName = "Charlie",
+			Email = "charlie@test.com",
+			EmailConfirmed = true
+		};
+		await userManager.CreateAsync(user, "Charlie123!");
+
+	}
+
+	var karla = await userManager.FindByEmailAsync("karla@test.com");
+	if (karla == null)
+	{
+		var user = new ApplicationUser
+		{
+			UserName = "Karla",
+			Email = "karla@test.com",
+			EmailConfirmed = true
+		};
+		await userManager.CreateAsync(user, "Karla123!");
+
+	}
+}
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
