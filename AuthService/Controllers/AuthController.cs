@@ -19,9 +19,9 @@ namespace AuthService.Controllers
 		}
 		#endregion
 
-		//Register
+		#region Register
 		[HttpPost("register")]
-		public IActionResult Register(string username,string email, string password)
+		public async Task<IActionResult> Register(string username,string email, string password)
 		{
 			var existingUser = _db.Users.FirstOrDefault(u => u.Email == email);
 			if (existingUser != null)
@@ -29,11 +29,13 @@ namespace AuthService.Controllers
 				return BadRequest("Email already in use.");
 			}
 
-			var result = _userManager.CreateAsync(new ApplicationUser
+			ApplicationUser user = new ApplicationUser
 			{
 				UserName = username,
 				Email = email,
-			}, password).Result;
+			};
+
+			var result = _userManager.CreateAsync(user, password).Result;
 
 			if (!result.Succeeded)
 			{
@@ -47,13 +49,56 @@ namespace AuthService.Controllers
 				return BadRequest(errors);
 			}
 
-			//To do: send confirmation email
+			// send confirmation email
+			// Generate confirmation token
+			var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-			return Ok("You successfully registered!");
+			// Build callback URL
+			var confirmationLink = Url.Action(
+				nameof(ConfirmEmail),   // action
+				"Auth",                 // controller
+				new { userId = user.Id, token = token },
+				protocol: HttpContext.Request.Scheme);
+
+			// TODO: send via email (SMTP, SendGrid, etc.)
+			Console.WriteLine($"Confirm link: {confirmationLink}");
+
+			return Ok("You successfully registered! Please confirm your email.");
 		}
+		#endregion
 
-		//confirm email
-		//To do
+		#region confirmemail
+		[HttpGet("confirmemail")]
+		public IActionResult ConfirmEmail (string userId, string token)
+		{
+			if(string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+			{
+				return BadRequest("User ID and Token are required");
+			}
+
+			var user = _db.Users.FirstOrDefault(u => u.Id == userId);
+			if (user == null)
+			{
+				return BadRequest("User was not found");
+			}
+			var result = _userManager.ConfirmEmailAsync(user, token).Result;
+
+			if (!result.Succeeded)
+			{
+				string errors = string.Empty;
+
+				foreach (var error in result.Errors)
+				{
+					errors += $"Error: {error.Code} - {error.Description}\n";
+				}
+
+				return BadRequest(errors);
+			}
+
+			return Ok("Email confirmed successfully!");
+		}
+		#endregion
+		
 
 		//Login
 		//To do

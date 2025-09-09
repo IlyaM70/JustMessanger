@@ -11,7 +11,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AuthDbContext>(options =>
 	options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options=>
+{
+	options.SignIn.RequireConfirmedEmail = true;
+})
 	.AddEntityFrameworkStores<AuthDbContext>()
 	.AddDefaultTokenProviders();
 
