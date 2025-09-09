@@ -2,10 +2,16 @@
 using MessageService.Data;
 using MessageService.Hubs;
 using MessageService.Models;
+using MessageService.Models.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Moq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace MessageService.Tests.Controllers.Messages
 {
