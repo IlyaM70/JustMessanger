@@ -50,17 +50,18 @@ namespace MessageService.Controllers
 				return BadRequest(allErrors);
 			}
 
-			User? sender = await _db.Users.FirstOrDefaultAsync(x=>x.Id!.Equals(dto.SenderId));
-			if (sender == null)
-			{
-				return NotFound("ERROR: Sender with given ID was not found in the database");
-			}
+			//to do
+			//User? sender = await _db.Users.FirstOrDefaultAsync(x=>x.Id!.Equals(dto.SenderId));
+			//if (sender == null)
+			//{
+			//	return NotFound("ERROR: Sender with given ID was not found in the database");
+			//}
 
-			User? recipient = await _db.Users.FirstOrDefaultAsync(x => x.Id!.Equals(dto.RecipientId));
-			if (recipient == null)
-			{
-				return NotFound("ERROR: Recipient with given ID was not found in the database");
-			}
+			//User? recipient = await _db.Users.FirstOrDefaultAsync(x => x.Id!.Equals(dto.RecipientId));
+			//if (recipient == null)
+			//{
+			//	return NotFound("ERROR: Recipient with given ID was not found in the database");
+			//}
 
 			#endregion
 
