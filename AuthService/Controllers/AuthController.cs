@@ -155,5 +155,18 @@ namespace AuthService.Controllers
 		}
 		#endregion
 
+		#region UserExist
+		[HttpGet("userexist/{userId}")]
+		public IActionResult UserExist(string userId)
+		{
+			var user = _db.Users.FirstOrDefault(u => u.Id == userId);
+			if (user == null)
+			{
+				return NotFound("User was not found");
+			}
+			return Ok("User found");
+		}
+		#endregion
+
 	}
 }

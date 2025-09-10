@@ -16,12 +16,15 @@ namespace MessageService.Controllers
 		#region ctor
 		private readonly MessageDbContext _db;
         private readonly IHubContext<MessagesHub> _hub;
+		private readonly AuthorizationClient _authClient;
 
-        public MessageController(MessageDbContext db, IHubContext<MessagesHub> hub)
+		public MessageController(MessageDbContext db, IHubContext<MessagesHub> hub,
+			AuthorizationClient authClient)
         {
             _db = db;
             _hub = hub;
-        }
+			_authClient = authClient;
+		}
 		#endregion
 
 		#region send
@@ -50,18 +53,15 @@ namespace MessageService.Controllers
 				return BadRequest(allErrors);
 			}
 
-			//to do
-			//User? sender = await _db.Users.FirstOrDefaultAsync(x=>x.Id!.Equals(dto.SenderId));
-			//if (sender == null)
-			//{
-			//	return NotFound("ERROR: Sender with given ID was not found in the database");
-			//}
+			if (!await _authClient.IsUserExistAsync(dto.SenderId))
+			{
+				return NotFound("ERROR: Sender with given ID was not found in the database");
+			}
 
-			//User? recipient = await _db.Users.FirstOrDefaultAsync(x => x.Id!.Equals(dto.RecipientId));
-			//if (recipient == null)
-			//{
-			//	return NotFound("ERROR: Recipient with given ID was not found in the database");
-			//}
+			if (!await _authClient.IsUserExistAsync(dto.RecipientId))
+			{
+				return NotFound("ERROR: Recipient with given ID was not found in the database");
+			}
 
 			#endregion
 

@@ -1,3 +1,4 @@
+using MessageService;
 using MessageService.Data;
 using MessageService.Hubs;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddDbContext<MessageDbContext>(opts =>
     opts.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+builder.Services.AddHttpClient<AuthorizationClient>(client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7135");
+});
+
 builder.Services.AddSignalR();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
