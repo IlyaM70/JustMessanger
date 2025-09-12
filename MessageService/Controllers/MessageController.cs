@@ -1,17 +1,19 @@
 ﻿using MessageService.Data;
 using MessageService.Hubs;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using MessageService.Models;
 using MessageService.Models.Dtos;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 
 namespace MessageService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class MessageController : ControllerBase
+	[Authorize]
+	public class MessageController : ControllerBase
     {
 		#region ctor
 		private readonly MessageDbContext _db;
