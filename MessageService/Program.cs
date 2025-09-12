@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
-// Add Authentication
+#region Add Authentication
 builder.Services.AddAuthentication(options =>
 {
 	options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -53,7 +53,7 @@ builder.Services.AddAuthentication(options =>
 		}
 	};
 });
-
+#endregion
 builder.Services.AddAuthorization();
 
 

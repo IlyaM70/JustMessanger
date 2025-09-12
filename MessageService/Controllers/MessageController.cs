@@ -1,7 +1,6 @@
 ﻿using MessageService.Data;
 using MessageService.Hubs;
 using MessageService.Models;
-using MessageService.Models.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -31,23 +30,9 @@ namespace MessageService.Controllers
 
 		#region send
 		[HttpPost("send")]
-        public async Task<IActionResult> Send([FromBody] SendMessageDto dto)
+        public async Task<IActionResult> Send([FromQuery] string recipientId, [FromQuery] string text)
         {
 			# region Validate
-			if (string.IsNullOrEmpty(dto.SenderId))
-            {
-                return BadRequest("ERROR: SenderId is empty");
-            }
-
-			if (string.IsNullOrEmpty(dto.RecipientId))
-			{
-				return BadRequest("ERROR: RecipientId is empty");
-			}
-
-			if (string.IsNullOrEmpty(dto.Text))
-			{
-				return BadRequest("ERROR: Text of message is empty");
-			}
 
 			if (!ModelState.IsValid)
 			{
@@ -55,12 +40,15 @@ namespace MessageService.Controllers
 				return BadRequest(allErrors);
 			}
 
-			if (!await _authClient.IsUserExistAsync(dto.SenderId))
+			//get userId from the token			
+			string? userId = User.FindFirst("uid").Value;
+
+			if (string.IsNullOrEmpty(userId) ||!await _authClient.IsUserExistAsync(userId))
 			{
 				return NotFound("ERROR: Sender with given ID was not found in the database");
 			}
 
-			if (!await _authClient.IsUserExistAsync(dto.RecipientId))
+			if (!await _authClient.IsUserExistAsync(recipientId))
 			{
 				return NotFound("ERROR: Recipient with given ID was not found in the database");
 			}
@@ -70,9 +58,9 @@ namespace MessageService.Controllers
 			//Persist
 			Message msg = new Message()
             {
-                SenderId = dto.SenderId,
-                RecipientId = dto.RecipientId,
-                Text = dto.Text,
+                SenderId = userId,
+                RecipientId = recipientId,
+                Text = text,
                 SentAt = DateTime.UtcNow
             };
             _db.Messages.Add(msg);
@@ -94,7 +82,7 @@ namespace MessageService.Controllers
 
 			//Push over SignalR only to the recipient
 			await _hub.Clients
-                .Group(dto.RecipientId!) // sends only to the connections in that group
+                .Group(userId) // sends only to the connections in that group
                 .SendAsync("ReceiveMessage", new
                 {
                     msg.Id,
