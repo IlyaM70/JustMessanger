@@ -5,8 +5,6 @@ VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessageService", "MessageService\MessageService.csproj", "{F562348A-74B0-4B51-A1F9-5F03B69F0C1E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagerWebClient", "MessagerWebClient\MessagerWebClient.csproj", "{ABE6B454-7E26-47FC-B763-FE18026C4777}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageService.Tests", "MessageService.Tests\MessageService.Tests.csproj", "{7F722ECB-07D3-427B-8F3B-3981A363E2E4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthService", "AuthService\AuthService.csproj", "{A0298D46-C287-4894-92A9-7F03E8748088}"
@@ -21,10 +19,6 @@ Global
 		{F562348A-74B0-4B51-A1F9-5F03B69F0C1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F562348A-74B0-4B51-A1F9-5F03B69F0C1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F562348A-74B0-4B51-A1F9-5F03B69F0C1E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ABE6B454-7E26-47FC-B763-FE18026C4777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ABE6B454-7E26-47FC-B763-FE18026C4777}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ABE6B454-7E26-47FC-B763-FE18026C4777}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ABE6B454-7E26-47FC-B763-FE18026C4777}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7F722ECB-07D3-427B-8F3B-3981A363E2E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7F722ECB-07D3-427B-8F3B-3981A363E2E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7F722ECB-07D3-427B-8F3B-3981A363E2E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
