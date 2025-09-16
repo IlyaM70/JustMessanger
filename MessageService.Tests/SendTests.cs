@@ -9,7 +9,7 @@ using Moq;
 using System.Security.Claims;
 using System.Text.Json;
 
-namespace MessageService.Tests.Controllers.Messages
+namespace MessageService.Tests
 {
 	public class SendTests
 	{
@@ -18,7 +18,7 @@ namespace MessageService.Tests.Controllers.Messages
 		{
 			private readonly HashSet<string> _existingUserIds;
 			public TestAuthorizationClient(IEnumerable<string> existingUserIds)
-				: base(new System.Net.Http.HttpClient()) // base HttpClient not used by the test double
+				: base(new HttpClient()) // base HttpClient not used by the test double
 			{
 				_existingUserIds = new HashSet<string>(existingUserIds);
 			}
@@ -71,7 +71,7 @@ namespace MessageService.Tests.Controllers.Messages
 			Assert.Equal("1", saved.SenderId);
 			Assert.Equal("2", saved.RecipientId);
 			Assert.Equal("Hello Persistence", saved.Text);
-			Assert.InRange((System.DateTime.UtcNow - saved.SentAt).TotalSeconds, 0, 5);
+			Assert.InRange((DateTime.UtcNow - saved.SentAt).TotalSeconds, 0, 5);
 
 			Assert.IsType<OkResult>(result);
 		}
@@ -126,7 +126,7 @@ namespace MessageService.Tests.Controllers.Messages
 			Assert.Equal("1", deserialized!["SenderId"].GetString());
 			Assert.Equal("Hello Test", deserialized["Text"].GetString());
 			Assert.True(deserialized["Id"].GetInt32() > 0);
-			Assert.True(deserialized["SentAt"].GetDateTime() <= System.DateTime.UtcNow);
+			Assert.True(deserialized["SentAt"].GetDateTime() <= DateTime.UtcNow);
 
 			Assert.IsType<OkResult>(result);
 		}
