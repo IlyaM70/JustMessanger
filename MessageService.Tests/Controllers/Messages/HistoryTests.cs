@@ -2,174 +2,92 @@
 using MessageService.Data;
 using MessageService.Hubs;
 using MessageService.Models;
-using MessageService.Models.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MessageService.Tests.Controllers.Messages
 {
-	public class HistoryTests
-	{
-		#region History_SuccesShould_ReturnOkAndMessagesBetweenTwoUsersInCorrectOrder
-		[Fact]
-		public async Task History_SuccesShould_ReturnOkAndMessagesBetweenTwoUsersInCorrectOrder()
-		{
-			#region Arrange
-			//Arrange: create in‑memory DbContext
-			var options = new DbContextOptionsBuilder<MessageDbContext>()
-				.UseInMemoryDatabase("testdb")
-				.Options;
-			await using var db = new MessageDbContext(options);
+    public class HistoryTests
+    {
+        private MessageController CreateController(MessageDbContext db)
+        {
+            var hubContext = new Mock<IHubContext<MessagesHub>>();
+            // GetHistory does not use AuthorizationClient, pass a simple instance
+            var authClient = new MessageService.AuthorizationClient(new HttpClient());
+            return new MessageController(db, hubContext.Object, authClient);
+        }
 
-			db.Messages.AddRange(
-			  new Message { SenderId = "A", RecipientId = "B", Text = "A→B", SentAt = DateTime.Now.AddMinutes(1) },
-			  new Message { SenderId = "B", RecipientId = "A", Text = "B→A", SentAt = DateTime.Now.AddMinutes(2) },
-			  new Message { SenderId = "A", RecipientId = "B", Text = "A→B(2)", SentAt = DateTime.Now.AddMinutes(3) },
-			  new Message { SenderId = "B", RecipientId = "A", Text = "B→A(2)", SentAt = DateTime.Now.AddMinutes(4) },
-			  // “noise” messages
-			  new Message { SenderId = "A", RecipientId = "C", Text = "A→C", SentAt = DateTime.Now.AddMinutes(1)},
-			  new Message { SenderId = "C", RecipientId = "A", Text = "C→A", SentAt = DateTime.Now.AddMinutes(2)},
-			  new Message { SenderId = "A", RecipientId = "C", Text = "A→C(2)", SentAt = DateTime.Now.AddMinutes(3)},
-			  new Message { SenderId = "C", RecipientId = "A", Text = "A→C (2)", SentAt = DateTime.Now.AddMinutes(4)}
-			);
-			await db.SaveChangesAsync();
+        [Fact]
+        public async Task GetHistory_Should_Return_BadRequest_When_UserIds_Empty()
+        {
+            var options = new DbContextOptionsBuilder<MessageDbContext>()
+                .UseInMemoryDatabase("History_BadRequest_Db")
+                .Options;
 
-			//Arrange: mock IHubContext
-			var hubContext = new Mock<IHubContext<MessagesHub>>();
-			var clients = new Mock<IHubClients>();
-			var clientProxy = new Mock<IClientProxy>();
+            await using var db = new MessageDbContext(options);
+            var controller = CreateController(db);
 
-			clients
-				.Setup(c => c.Group(It.IsAny<string>()))
-				.Returns(clientProxy.Object);
+            var res1 = await controller.GetHistory("", "2");
+            var res2 = await controller.GetHistory("1", "");
 
-			hubContext
-				.Setup(h => h.Clients)
-				.Returns(clients.Object);
+            Assert.IsType<BadRequestObjectResult>(res1);
+            Assert.IsType<BadRequestObjectResult>(res2);
+        }
 
-			clientProxy
-				.Setup(p => p.SendCoreAsync(
-					It.IsAny<string>(),
-					It.IsAny<object[]>(),
-					It.IsAny<CancellationToken>())
-				)
-				.Returns(Task.CompletedTask);
+        [Fact]
+        public async Task GetHistory_Should_Return_Empty_List_When_No_Messages()
+        {
+            var options = new DbContextOptionsBuilder<MessageDbContext>()
+                .UseInMemoryDatabase("History_Empty_Db")
+                .Options;
 
+            await using var db = new MessageDbContext(options);
+            var controller = CreateController(db);
 
-			//Arrange controller
-			var controller = new MessageController(db, hubContext.Object);
+            var res = await controller.GetHistory("1", "2");
 
-			#endregion
+            var ok = Assert.IsType<OkObjectResult>(res);
+            var list = Assert.IsType<List<Message>>(ok.Value);
+            Assert.Empty(list);
+        }
 
-			//Act: call hystory()
-			var result = await controller.GetHistory("A","B");
+        [Fact]
+        public async Task GetHistory_Should_Return_Only_Messages_Between_Users_In_Order()
+        {
+            var options = new DbContextOptionsBuilder<MessageDbContext>()
+                .UseInMemoryDatabase("History_Messages_Db")
+                .Options;
 
-			// Assert 1 & 2: Ensure it’s an OkObjectResult
-			var okResult = Assert.IsType<OkObjectResult>(result);
+            await using var db = new MessageDbContext(options);
 
-			// Assert 3: Ensure the payload is an enumerable
-			var payload = Assert.IsAssignableFrom<System.Collections.IEnumerable>(okResult.Value)
-				.Cast<object>()
-				.ToList();
+            // messages between 1 and 2
+            var m1 = new Message { SenderId = "1", RecipientId = "2", Text = "first", SentAt = DateTime.UtcNow.AddMinutes(-10) };
+            var m2 = new Message { SenderId = "2", RecipientId = "1", Text = "second", SentAt = DateTime.UtcNow.AddMinutes(-5) };
+            var m3 = new Message { SenderId = "1", RecipientId = "2", Text = "third", SentAt = DateTime.UtcNow.AddMinutes(-1) };
 
-			// Assert 4: Only the 4 A↔B messages are returned
-			Assert.Equal(4, payload.Count);
+            // unrelated messages
+            var other1 = new Message { SenderId = "3", RecipientId = "1", Text = "other", SentAt = DateTime.UtcNow.AddMinutes(-2) };
 
-			// Helper to extract a property by name
-			T GetProp<T>(object obj, string propName) =>
-				(T)obj.GetType().GetProperty(propName)!.GetValue(obj)!;
+            await db.Messages.AddRangeAsync(m1, m2, m3, other1);
+            await db.SaveChangesAsync();
 
-			// Assert 5: Check each item’s details and ordering
-			var m1 = payload[0];
-			Assert.Equal("A", GetProp<string>(m1, "SenderId"));
-			Assert.Equal("B", GetProp<string>(m1, "RecipientId"));
-			Assert.Equal("A→B", GetProp<string>(m1, "Text"));
+            var controller = CreateController(db);
 
-			var m2 = payload[1];
-			Assert.Equal("B", GetProp<string>(m2, "SenderId"));
-			Assert.Equal("A", GetProp<string>(m2, "RecipientId"));
-			Assert.Equal("B→A", GetProp<string>(m2, "Text"));
+            var res = await controller.GetHistory("1", "2");
 
-			var m3 = payload[2];
-			Assert.Equal("A", GetProp<string>(m3, "SenderId"));
-			Assert.Equal("B", GetProp<string>(m3, "RecipientId"));
-			Assert.Equal("A→B(2)", GetProp<string>(m3, "Text"));
+            var ok = Assert.IsType<OkObjectResult>(res);
+            var list = Assert.IsType<List<Message>>(ok.Value);
 
-			var m4 = payload[3];
-			Assert.Equal("B", GetProp<string>(m4, "SenderId"));
-			Assert.Equal("A", GetProp<string>(m4, "RecipientId"));
-			Assert.Equal("B→A(2)", GetProp<string>(m4, "Text"));
+            // should only contain m1,m2,m3 in chronological order
+            Assert.Equal(3, list.Count);
+            Assert.Equal("first", list[0].Text);
+            Assert.Equal("second", list[1].Text);
+            Assert.Equal("third", list[2].Text);
 
-		}
-		#endregion
-
-		#region History_Should_Return_BadRequest_On_ValidationFailure
-		[Fact]
-		public async Task History_Should_Return_BadRequest_On_ValidationFailure()
-		{
-			#region Arrange
-			var options = new DbContextOptionsBuilder<MessageDbContext>()
-				.UseInMemoryDatabase("testdb-history-badrequest")
-				.Options;
-
-			await using var db = new MessageDbContext(options);
-
-			await db.Users.AddAsync(new User { Id = "1", Username = "Sender" });
-			await db.Users.AddAsync(new User { Id = "2", Username = "Recipient" });
-			await db.SaveChangesAsync();
-
-			var hubContext = new Mock<IHubContext<MessagesHub>>();
-			var clients = new Mock<IHubClients>();
-			var clientProxy = new Mock<IClientProxy>();
-
-			clients
-				.Setup(c => c.Group(It.IsAny<string>()))
-				.Returns(clientProxy.Object);
-
-			hubContext
-				.Setup(h => h.Clients)
-				.Returns(clients.Object);
-
-			clientProxy
-				.Setup(p => p.SendCoreAsync(
-					It.IsAny<string>(),
-					It.IsAny<object[]>(),
-					It.IsAny<CancellationToken>()))
-				.Returns(Task.CompletedTask);
-
-			var controller = new MessageController(db, hubContext.Object);
-
-			db.Messages.AddRange(
-				  new Message { SenderId = "A", RecipientId = "B", Text = "A→B", SentAt = DateTime.Now.AddMinutes(1) },
-				  new Message { SenderId = "B", RecipientId = "A", Text = "B→A", SentAt = DateTime.Now.AddMinutes(2) },
-				  new Message { SenderId = "A", RecipientId = "B", Text = "A→B(2)", SentAt = DateTime.Now.AddMinutes(3) },
-				  new Message { SenderId = "B", RecipientId = "A", Text = "B→A(2)", SentAt = DateTime.Now.AddMinutes(4) },
-				  // “noise” messages
-				  new Message { SenderId = "A", RecipientId = "C", Text = "A→C", SentAt = DateTime.Now.AddMinutes(1) },
-				  new Message { SenderId = "C", RecipientId = "A", Text = "C→A", SentAt = DateTime.Now.AddMinutes(2) },
-				  new Message { SenderId = "A", RecipientId = "C", Text = "A→C(2)", SentAt = DateTime.Now.AddMinutes(3) },
-				  new Message { SenderId = "C", RecipientId = "A", Text = "A→C (2)", SentAt = DateTime.Now.AddMinutes(4) }
-				);
-			#endregion
-
-			// Act
-			var result = await controller.GetHistory("", "B");
-			var result2 = await controller.GetHistory("A", "");
-			var result3 = await controller.GetHistory("", "");
-
-
-			// Assert
-			Assert.IsType<BadRequestObjectResult>(result);
-			Assert.IsType<BadRequestObjectResult>(result2);
-			Assert.IsType<BadRequestObjectResult>(result3);
-		}
-		#endregion
-	}
+            // ensure none of the returned messages involve other users
+            Assert.All(list, msg => Assert.True((msg.SenderId == "1" && msg.RecipientId == "2") || (msg.SenderId == "2" && msg.RecipientId == "1")));
+        }
+    }
 }

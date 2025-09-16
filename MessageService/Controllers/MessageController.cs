@@ -40,6 +40,16 @@ namespace MessageService.Controllers
 				return BadRequest(allErrors);
 			}
 
+			if (string.IsNullOrEmpty(recipientId))
+			{
+				return BadRequest("ERROR: RecipientId is empty");
+			}
+
+			if (string.IsNullOrEmpty(text))
+			{
+				return BadRequest("ERROR: Text is empty");
+			}
+
 			//get userId from the token			
 			string? userId = User.FindFirst("uid").Value;
 
