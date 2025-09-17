@@ -1,4 +1,5 @@
 ﻿using AuthService.Data;
+using AuthService.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -16,11 +17,13 @@ namespace AuthService.Controllers
 		private readonly AuthDbContext _db;
 		private readonly UserManager<ApplicationUser> _userManager;
 		private readonly IConfiguration _configuration;
-		public AuthController(AuthDbContext db, UserManager<ApplicationUser> userManager, IConfiguration configuration)
+		private readonly IEmailConfirmator _emailConfirmator;
+		public AuthController(AuthDbContext db, UserManager<ApplicationUser> userManager, IConfiguration configuration, IEmailConfirmator emailConfirmator)
 		{
 			_db = db;
 			_userManager = userManager;
 			_configuration = configuration;
+			_emailConfirmator = emailConfirmator;
 		}
 		#endregion
 
@@ -54,19 +57,18 @@ namespace AuthService.Controllers
 				return BadRequest(errors);
 			}
 
-			// send confirmation email
 			// Generate confirmation token
 			var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-			// Build callback URL
+			// Build callback URL (this stays in controller, where HttpContext exists)
 			var confirmationLink = Url.Action(
-				nameof(ConfirmEmail),   // action
-				"Auth",                 // controller
+				nameof(ConfirmEmail),
+				"Auth",
 				new { userId = user.Id, token = token },
 				protocol: HttpContext.Request.Scheme);
 
-			// TODO: send via email (SMTP, SendGrid, etc.)
-			Console.WriteLine($"Confirm link: {confirmationLink}");
+			// Delegate actual email sending to the service
+			await _emailConfirmator.SendConfirmationEmailAsync(user, confirmationLink);
 
 			return Ok("You successfully registered! Please confirm your email.");
 		}
