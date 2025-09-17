@@ -57,18 +57,14 @@ namespace AuthService.Controllers
 				return BadRequest(errors);
 			}
 
-			// Generate confirmation token
 			var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-			// Build callback URL (this stays in controller, where HttpContext exists)
-			var confirmationLink = Url.Action(
-				nameof(ConfirmEmail),
-				"Auth",
-				new { userId = user.Id, token = token },
-				protocol: HttpContext.Request.Scheme);
+			// build base url from HttpContext OR use fallback
+			var baseUrl = HttpContext?.Request?.Host.HasValue == true
+				? $"{Request.Scheme}://{Request.Host}"
+				: "http://localhost"; // fallback for tests
 
-			// Delegate actual email sending to the service
-			await _emailConfirmator.SendConfirmationEmailAsync(user, confirmationLink);
+			await _emailConfirmator.SendConfirmationEmailAsync(user, token, baseUrl);
 
 			return Ok("You successfully registered! Please confirm your email.");
 		}

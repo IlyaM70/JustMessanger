@@ -2,6 +2,6 @@
 {
 	public interface IEmailConfirmator
 	{
-		Task SendConfirmationEmailAsync(ApplicationUser user, string confirmationLink);
+		public Task SendConfirmationEmailAsync(ApplicationUser user, string token, string baseUrl);
 	}
 }

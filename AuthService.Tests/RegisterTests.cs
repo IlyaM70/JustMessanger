@@ -1,5 +1,6 @@
 using AuthService.Controllers;
 using AuthService.Data;
+using AuthService.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,15 @@ namespace AuthService.Tests
 {
 	public class RegisterTests
 	{
+		class EmailConfirmatorMock : IEmailConfirmator
+		{
+			public Task SendConfirmationEmailAsync(ApplicationUser user, string confirmationLink, string baseUrl)
+			{
+				// Mock implementation does nothing
+				return Task.CompletedTask;
+			}
+		}
+
 		#region Register_CreatesUser_WhenInputIsValid
 		[Fact]
 		public async void Register_CreatesUser_WhenInputIsValid()
@@ -55,7 +65,8 @@ namespace AuthService.Tests
 				});
 
 			IConfiguration configuration = new ConfigurationManager();
-			AuthController controller = new(authDbContext, userManagerMock.Object, configuration);
+			EmailConfirmatorMock emailConfirmator = new();
+			AuthController controller = new(authDbContext, userManagerMock.Object, configuration, emailConfirmator);
 			
 			//end arrange
 			#endregion
@@ -76,4 +87,6 @@ namespace AuthService.Tests
 		}
 		#endregion
 	}
+
+
 }
