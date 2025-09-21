@@ -47,6 +47,17 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddTransient<IEmailConfirmator, EmailConfirmator>();
 
+builder.Services.AddCors(options =>
+{
+	options.AddDefaultPolicy(policy =>
+	{
+		policy.WithOrigins("http://localhost:5173")
+			  .AllowAnyHeader()
+			  .AllowAnyMethod()
+			  .AllowCredentials();
+	});
+});
+
 var app = builder.Build();
 
 //seed users
@@ -102,7 +113,13 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+	app.UseHttpsRedirection();
+}
+
+
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();

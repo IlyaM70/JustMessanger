@@ -1,4 +1,5 @@
 ﻿using AuthService.Data;
+using AuthService.Models;
 using AuthService.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -29,32 +30,33 @@ namespace AuthService.Controllers
 
 		#region Register
 		[HttpPost("register")]
-		public async Task<IActionResult> Register(string username,string email, string password)
+		public async Task<IActionResult> Register(RegisterRequest request)
 		{
-			var existingUser = _db.Users.FirstOrDefault(u => u.Email == email);
+			var existingUser = _db.Users.FirstOrDefault(u => u.Email == request.Email);
 			if (existingUser != null)
 			{
-				return BadRequest("Email already in use.");
+				return BadRequest(new { errors = new Dictionary<string, string[]>
+				{ { "Email", new[] { "Email already in use." } } } });
 			}
 
 			ApplicationUser user = new ApplicationUser
 			{
-				UserName = username,
-				Email = email,
+				UserName = request.UserName,
+				Email = request.Email,
 			};
 
-			var result = _userManager.CreateAsync(user, password).Result;
+			var result = _userManager.CreateAsync(user, request.Password).Result;
 
 			if (!result.Succeeded)
 			{
-				string errors = string.Empty;
+				Dictionary<string, string[]> errors = new ();
 
 				foreach (var error in result.Errors)
 				{
-					errors += $"Error: {error.Code} - {error.Description}\n";
+					errors[error.Code] = new[] { error.Description };					
 				}
 
-				return BadRequest(errors);
+				return BadRequest(new { errors = errors});
 			}
 
 			var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -66,7 +68,7 @@ namespace AuthService.Controllers
 
 			await _emailConfirmator.SendConfirmationEmailAsync(user, token, baseUrl);
 
-			return Ok("You successfully registered! Please confirm your email.");
+			return Ok(new { message = "You successfully registered! Please confirm your email." });
 		}
 		#endregion
 
@@ -104,24 +106,23 @@ namespace AuthService.Controllers
 
 		#region Login
 		[HttpPost("login")]
-		public  IActionResult Login(string email,string password)
+		public  IActionResult Login(LoginRequest request)
 		{
-			var user = _db.Users.FirstOrDefault(u => u.Email == email);
+			var user = _db.Users.FirstOrDefault(u => u.Email == request.Email);
 			if (user == null)
 			{
-				return BadRequest("Invalid email or password.");
+				return BadRequest(new { errors = new Dictionary<string, string[]> { { "Email", new[] { "Invalid email or password." } } } });
 			}
-			bool passwordValid = _userManager.CheckPasswordAsync(user, password).Result;
+			bool passwordValid = _userManager.CheckPasswordAsync(user, request.Password).Result;
 			if (!passwordValid)
 			{
-				return BadRequest("Invalid email or password.");
+				return BadRequest(new { errors = new Dictionary<string, string[]> { { "Password", new[] { "Invalid email or password." } } } });
 			}
 
 			//Issie a JWT
 			string token = GenerateToken(user);
 
-
-			return Ok(new {token});
+			return Ok(new {token = token});
 		}
 		#endregion
 
