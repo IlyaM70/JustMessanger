@@ -5,6 +5,6 @@ import Regin from './pages/Regin'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <Regin />
+        <Regin isRegister={true} />
   </StrictMode>
 )
