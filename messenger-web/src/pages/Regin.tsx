@@ -27,9 +27,9 @@ const Regin: React.FC<LoginProps> = ({ isRegister}) => {
                 body: JSON.stringify({ email, password })
             });
 
-            console.log(response);
+            
             const data = await response.json();
-            console.log(data);
+            
 
             if (!response.ok) {
 
