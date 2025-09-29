@@ -30,7 +30,7 @@ namespace MessageService.Controllers
 
 		#region send
 		[HttpPost("send")]
-        public async Task<IActionResult> Send([FromQuery] string recipientId, [FromQuery] string text)
+        public async Task<IActionResult> Send([FromBody] SendRequest request)
         {
 			# region Validate
 
@@ -40,12 +40,12 @@ namespace MessageService.Controllers
 				return BadRequest(allErrors);
 			}
 
-			if (string.IsNullOrEmpty(recipientId))
+			if (string.IsNullOrEmpty(request.RecipientId))
 			{
 				return BadRequest("ERROR: RecipientId is empty");
 			}
 
-			if (string.IsNullOrEmpty(text))
+			if (string.IsNullOrEmpty(request.Text))
 			{
 				return BadRequest("ERROR: Text is empty");
 			}
@@ -58,7 +58,7 @@ namespace MessageService.Controllers
 				return NotFound("ERROR: Sender with given ID was not found in the database");
 			}
 
-			if (!await _authClient.IsUserExistAsync(recipientId))
+			if (!await _authClient.IsUserExistAsync(request.RecipientId))
 			{
 				return NotFound("ERROR: Recipient with given ID was not found in the database");
 			}
@@ -69,8 +69,8 @@ namespace MessageService.Controllers
 			Message msg = new Message()
             {
                 SenderId = userId,
-                RecipientId = recipientId,
-                Text = text,
+                RecipientId = request.RecipientId,
+                Text = request.Text,
                 SentAt = DateTime.UtcNow
             };
             _db.Messages.Add(msg);
