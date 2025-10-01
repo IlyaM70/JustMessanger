@@ -92,8 +92,8 @@ namespace MessageService.Controllers
 
 			//Push over SignalR only to the recipient
 			await _hub.Clients
-                .Group(userId) // sends only to the connections in that group
-                .SendAsync("ReceiveMessage", new
+				 .Group(request.RecipientId) // notify recipient
+				.SendAsync("ReceiveMessage", new
                 {
                     msg.Id,
                     msg.SenderId,

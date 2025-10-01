@@ -1,22 +1,103 @@
 import React from 'react';
 import { useState, useEffect, useRef } from 'react';
+import { HubConnectionBuilder } from "@microsoft/signalr";
+import { jwtDecode } from 'jwt-decode';
 
 type ChatProps = {
     token: string;
     recipientId: string;
 };
 
+type Message = {
+    text: string;
+    isOwn: boolean;
+}
+interface TokenPayload {
+    uid: string;
+    email: string;
+    expiration: number;
+}
+
+
 const Chat: React.FC<ChatProps> = ({ token, recipientId }) => {
 
+    const [currentUserId, setCurrentUserId] = useState<string>('');
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
-
-    type Message = {
-        text: string;
-        isOwn: boolean;
-    }
-
     const [messages, setMessages] = useState<Message[]>([]);
+
+    //get user id from token
+    useEffect(() => {
+        try
+        {
+            const decoded = jwtDecode<TokenPayload>(token);            
+            setCurrentUserId(decoded.uid);
+        }
+        catch (error)
+        {
+            console.error("Invalid token:", error);
+        }
+    }, [token]);
+
+    const parseMessages = (data: unknown[], currentUserId: string): Message[] => {
+        return data.map(msg => ({
+            text: msg.text,
+            isOwn: msg.senderId === currentUserId, // true if you sent it
+        }));
+    };
+
+    //get message history  
+    useEffect(() => {
+        const fetchHistory = async () => {
+            try {
+                const response = await fetch(
+                    `https://localhost:7136/api/Message/history?userId=${currentUserId}&otherUserId=${recipientId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch history");
+                }
+
+                const data = await response.json();
+                const parsed: Message[] = parseMessages(data, currentUserId);
+                setMessages(parsed);
+            } catch (err) {
+                console.error("Error fetching messages:", err);
+            }
+        };
+
+        fetchHistory();
+    }, [currentUserId, recipientId, token]);
+
+    //set up web socket connection
+    useEffect(() => {
+        const connection = new HubConnectionBuilder()
+            .withUrl("https://localhost:7136/messagesHub",
+                {
+                    accessTokenFactory: () => token,
+                })
+            .withAutomaticReconnect()
+            .build();
+
+        connection.start().then(() => {
+            connection.invoke("JoinRoom", recipientId);
+            connection.on("ReceiveMessage", (msg) => {
+                setMessages((prevMessages) => [...prevMessages, msg]);
+            });
+        });
+
+        return () => {
+            connection.stop();
+        }
+
+
+    }, [token, recipientId]);
+
     const chatRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom when messages change
@@ -69,9 +150,6 @@ const Chat: React.FC<ChatProps> = ({ token, recipientId }) => {
         AppendMessage(message, true);
     }
 
-
-
-
     return (
         <div className="container-xl">
             <div className="row">
@@ -82,7 +160,7 @@ const Chat: React.FC<ChatProps> = ({ token, recipientId }) => {
                     <div id="chat" ref={chatRef} className="border rounded p-3 mb-3" style={{ height: '400px', overflowY: 'scroll' }}>
                         {/* Messages will be displayed here */}     
                         {messages.map((msg, index) => (
-                            <div key={index} className={`mb-2 ${msg.isOwn ? 'text-start' : 'text-end'}`}>
+                            <div key={index} className={`mb-2 ${msg.isOwn ? 'text-end' : 'text-start'}`}>
                                 <span className={`badge ${msg.isOwn ? 'bg-primary' : 'bg-secondary'}`}>{msg.text}</span>
                             </div>
                         )) }
