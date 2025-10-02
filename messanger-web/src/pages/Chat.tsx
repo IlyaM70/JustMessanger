@@ -3,10 +3,10 @@ import { useState, useEffect, useRef } from 'react';
 import { HubConnectionBuilder } from "@microsoft/signalr";
 import { jwtDecode } from 'jwt-decode';
 
-type ChatProps = {
-    token: string;
-    recipientId: string;
-};
+// type ChatProps = {
+//     token: string;
+//     recipientId: string;
+// };
 
 type Message = {
     text: string;
@@ -18,13 +18,23 @@ interface TokenPayload {
     expiration: number;
 }
 
+interface MessageData {
+    id: string;
+    recipientId: string;
+    senderId: string;
+    sentAt: string;
+    text: string;
+}
 
-const Chat: React.FC<ChatProps> = ({ token, recipientId }) => {
+
+const Chat: React.FC = () => {
 
     const [currentUserId, setCurrentUserId] = useState<string>('');
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState<Message[]>([]);
+    const token = localStorage.getItem('token') || '';
+    const [recipientId, setRecipientId] = useState('');
 
     //get user id from token
     useEffect(() => {
@@ -39,7 +49,7 @@ const Chat: React.FC<ChatProps> = ({ token, recipientId }) => {
         }
     }, [token]);
 
-    const parseMessages = (data: unknown[], currentUserId: string): Message[] => {
+    const parseMessages = (data: MessageData[], currentUserId: string): Message[] => {
         return data.map(msg => ({
             text: msg.text,
             isOwn: msg.senderId === currentUserId, // true if you sent it
@@ -77,15 +87,15 @@ const Chat: React.FC<ChatProps> = ({ token, recipientId }) => {
     //set up web socket connection
     useEffect(() => {
         const connection = new HubConnectionBuilder()
-            .withUrl("https://localhost:7136/messagesHub",
-                {
-                    accessTokenFactory: () => token,
-                })
+            .withUrl(`https://localhost:7136/messagesHub?userId=${currentUserId}`, {
+                accessTokenFactory: () => token,
+            })
             .withAutomaticReconnect()
             .build();
 
         connection.start().then(() => {
-            connection.invoke("JoinRoom", recipientId);
+            console.log("Connected to SignalR hub");
+
             connection.on("ReceiveMessage", (msg) => {
                 setMessages((prevMessages) => [...prevMessages, msg]);
             });
@@ -93,10 +103,8 @@ const Chat: React.FC<ChatProps> = ({ token, recipientId }) => {
 
         return () => {
             connection.stop();
-        }
-
-
-    }, [token, recipientId]);
+        };
+    }, [token, currentUserId]);
 
     const chatRef = useRef<HTMLDivElement>(null);
 
@@ -144,7 +152,7 @@ const Chat: React.FC<ChatProps> = ({ token, recipientId }) => {
         }
         catch (error)
         {
-            setError('Network error');
+            setError('Network error: ' + error);
         }
 
         AppendMessage(message, true);
@@ -157,6 +165,7 @@ const Chat: React.FC<ChatProps> = ({ token, recipientId }) => {
                 <div className="col-8">
                     {error && <div className="text-danger">{error}</div>}
                     <h1 className="text-center my-4">Recipient Name</h1>
+                    <input value={recipientId} onChange={(e) => setRecipientId(e.target.value)} type="text" className="form-control mb-3" placeholder="Recipient ID" />
                     <div id="chat" ref={chatRef} className="border rounded p-3 mb-3" style={{ height: '400px', overflowY: 'scroll' }}>
                         {/* Messages will be displayed here */}     
                         {messages.map((msg, index) => (
