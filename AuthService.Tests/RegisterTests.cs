@@ -1,5 +1,6 @@
 using AuthService.Controllers;
 using AuthService.Data;
+using AuthService.Models;
 using AuthService.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -68,11 +69,18 @@ namespace AuthService.Tests
 			EmailConfirmatorMock emailConfirmator = new();
 			AuthController controller = new(authDbContext, userManagerMock.Object, configuration, emailConfirmator);
 
-			//end arrange
-			#endregion
+			RegisterRequest request = new RegisterRequest
+			{
+				UserName = "testuser",
+				Email = "test@test.com",
+				Password = "Password123!"
+			};
 
-			// Act
-			var result = await controller.Register("testuser", "test@test.com", "Password123!");
+			//end arrange
+				#endregion
+
+				// Act
+			var result = await controller.Register(request);
 			// Assert
 			Assert.IsType<OkObjectResult>(result);
 
@@ -136,11 +144,18 @@ namespace AuthService.Tests
 			EmailConfirmatorMock emailConfirmator = new();
 			AuthController controller = new(authDbContext, userManagerMock.Object, configuration, emailConfirmator);
 
+			RegisterRequest request = new RegisterRequest
+			{
+				UserName = "newuser",
+				Email = "existinguser@mail.com",
+				Password = "Newuser123!"
+			};
+
 			//end arrange
 			#endregion
 
 			// Act
-			var result = await controller.Register("newuser", "existinguser@mail.com", "Newuser123!");
+			var result = await controller.Register(request);
 
 			// Assert
 			Assert.IsType<BadRequestObjectResult>(result);
@@ -179,10 +194,18 @@ namespace AuthService.Tests
 			IConfiguration configuration = new ConfigurationManager();
 			EmailConfirmatorMock emailConfirmator = new();
 			AuthController controller = new(authDbContext, userManagerMock.Object, configuration, emailConfirmator);
+
+			RegisterRequest request = new RegisterRequest
+			{
+				UserName = "weakuser",
+				Email = "weakuser@mail.com",
+				Password = "weak"
+			};
+
 			//end arrange
 			#endregion
 			// Act
-			var result = await controller.Register("weakuser", "weakuser@mail.com", "weak");
+			var result = await controller.Register(request);
 			// Assert
 			Assert.IsType<BadRequestObjectResult>(result);
 			Assert.Equal("Error:  - Password is too weak.\n", (result as BadRequestObjectResult).Value);
@@ -246,11 +269,18 @@ namespace AuthService.Tests
 
 			AuthController controller = new(authDbContext, userManagerMock.Object, configuration, emailConfirmatorMock.Object);
 
+			RegisterRequest request = new RegisterRequest
+			{
+				UserName = "testuser",
+				Email = "test@test.com",
+				Password = "Password123!"
+			};
+
 			//end arrange
 			#endregion
 
 			// Act
-			var result = await controller.Register("testuser", "test@test.com", "Password123!");
+			var result = await controller.Register(request);
 
 			// Assert result is success
 			Assert.IsType<OkObjectResult>(result);

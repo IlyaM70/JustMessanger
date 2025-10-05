@@ -1,5 +1,6 @@
 ﻿using AuthService.Controllers;
 using AuthService.Data;
+using AuthService.Models;
 using AuthService.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -32,10 +33,15 @@ namespace AuthService.Tests
 					PasswordHash = Guid.NewGuid().ToString(),
 				});
 
+			LoginRequest loginRequest = new LoginRequest()
+			{
+				Email = "nonexistinguser",
+				Password = "password"
+			};
 
 			//Act
 			var controller = new AuthController(dbContext, null, null, null);
-			var result = controller.Login("nonexistinguser", "password");
+			var result = controller.Login(loginRequest);
 
 			//Assert
 			Assert.IsType<BadRequestObjectResult>(result);
@@ -82,8 +88,14 @@ namespace AuthService.Tests
 			// Use the controller constructor that matches your code (4 params shown here)
 			var controller = new AuthController(dbContext, userManagerMock.Object, configuration, emailConfirmatorMock.Object);
 
+			LoginRequest loginRequest = new LoginRequest
+			{
+				Email = "existinguser@example.com",
+				Password = "password"
+			};
+
 			// Act
-			var result = controller.Login("existinguser@example.com", "password");
+			var result = controller.Login(loginRequest);
 
 			// Assert response
 			Assert.IsType<BadRequestObjectResult>(result);
@@ -147,8 +159,14 @@ namespace AuthService.Tests
 
 			var controller = new AuthController(dbContext, userManagerMock.Object, configuration, emailConfirmatorMock.Object);
 
+			LoginRequest loginRequest = new LoginRequest
+			{
+				Email = "existinguser@example.com",
+				Password = "Password123!"
+			};
+
 			// Act
-			var actionResult = controller.Login("existinguser@example.com", "Password123!");
+			var actionResult = controller.Login(loginRequest);
 
 			// Assert result shape
 			var okResult = Assert.IsType<OkObjectResult>(actionResult);

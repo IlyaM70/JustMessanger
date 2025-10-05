@@ -1,6 +1,7 @@
 ﻿using MessageService.Controllers;
 using MessageService.Data;
 using MessageService.Hubs;
+using MessageService.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -62,7 +63,14 @@ namespace MessageService.Tests
 
 			var controller = CreateController(db, hubContext, authClient, "1");
 
-			var result = await controller.Send("2", "Hello Persistence");
+			SendRequest request = new SendRequest
+			{
+				RecipientId = "2",
+				Text = "Hello Persistence"
+			};
+
+
+			var result = await controller.Send(request);
 
 			var messages = await db.Messages.ToListAsync();
 			Assert.Single(messages);
@@ -108,7 +116,14 @@ namespace MessageService.Tests
 
 			var controller = CreateController(db, hubContext, authClient, "1");
 
-			var result = await controller.Send("2", "Hello Test");
+			SendRequest request = new SendRequest
+			{
+				RecipientId = "2",
+				Text = "Hello Test"
+			};
+
+
+			var result = await controller.Send(request);
 
 			clients.Verify(c => c.Group("1"), Times.Once);
 			clientProxy.Verify(p =>
@@ -152,10 +167,28 @@ namespace MessageService.Tests
 
 			var controller = CreateController(db, hubContext, authClient, "1");
 
+			SendRequest request1 = new SendRequest
+			{
+				RecipientId = "",
+				Text = ""
+			};
+
+			SendRequest request2 = new SendRequest
+			{
+				RecipientId = "2",
+				Text = ""
+			};
+
+			SendRequest request3 = new SendRequest
+			{
+				RecipientId = "",
+				Text = "test"
+			};
+
 			// Only test for missing/empty recipientId or text, but with a valid sender and recipient
-			var result1 = await controller.Send("", "");         // Both empty
-			var result2 = await controller.Send("2", "");        // Empty text
-			var result3 = await controller.Send("", "test");     // Empty recipient
+			var result1 = await controller.Send(request1);         // Both empty
+			var result2 = await controller.Send(request2);        // Empty text
+			var result3 = await controller.Send(request3);     // Empty recipient
 
 			Assert.IsType<BadRequestObjectResult>(result1);
 			Assert.IsType<BadRequestObjectResult>(result2);
@@ -182,13 +215,23 @@ namespace MessageService.Tests
 			// Sender not found
 			var authClient1 = new TestAuthorizationClient(new[] { "3" });
 			var controller1 = CreateController(db, hubContext, authClient1, "1");
-			var result1 = await controller1.Send("2", "test");
+			SendRequest request1 = new SendRequest
+			{
+				RecipientId = "2",
+				Text = "test"
+			};
+			var result1 = await controller1.Send(request1);
 			Assert.IsType<NotFoundObjectResult>(result1);
 
 			// Recipient not found
 			var authClient2 = new TestAuthorizationClient(new[] { "1" });
 			var controller2 = CreateController(db, hubContext, authClient2, "1");
-			var result2 = await controller2.Send("3", "test");
+			SendRequest request2 = new SendRequest
+			{
+				RecipientId = "3",
+				Text = "test"
+			};
+			var result2 = await controller2.Send(request2);
 			Assert.IsType<NotFoundObjectResult>(result2);
 		}
 	}
