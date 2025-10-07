@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using MessageService.Models;
 
 
 namespace AuthService.Controllers
@@ -165,6 +166,25 @@ namespace AuthService.Controllers
 			}
 			return Ok("User found");
 		}
+		#endregion
+
+		#region FillContacts
+		[HttpPost("fillcontacts")]
+		public async Task<IActionResult> FillContacts(List<Contact> contacts)
+		{
+			foreach (var contact in contacts)
+			{
+				var user = await _db.Users.FindAsync(contact.UserId);
+				if (user != null)
+				{
+					contact.UserName = user.UserName;
+					contact.Email = user.Email;
+				}
+			}
+
+			return Ok(contacts);
+		}
+
 		#endregion
 
 	}

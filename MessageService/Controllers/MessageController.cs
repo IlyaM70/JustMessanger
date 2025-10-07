@@ -141,6 +141,66 @@ namespace MessageService.Controllers
 			return Ok(messages);
 		}
 		#endregion
+
+		#region contacts
+		[HttpGet("contacts")]
+		public async Task<IActionResult> GetContacts([FromQuery] string userId)
+		{
+			//Validate
+			if (string.IsNullOrEmpty(userId))
+			{
+				return BadRequest("ERROR: UserId is empty");
+			}
+			List<Contact> contacts = [];
+			try
+			{
+				var ids = await _db.Messages
+					.Where(m => m.SenderId == userId || m.RecipientId == userId)
+					.Select(m => m.SenderId == userId ? m.RecipientId : m.SenderId)
+					.Distinct()
+					.ToListAsync();
+
+				List<Contact> result = [];
+				foreach (var id in ids)
+				{
+					result.Add(new Contact { UserId = id,
+						LastMessage = await _db.Messages
+						.Where(m => m.SenderId == id || m.RecipientId == id)
+						.OrderByDescending(m => m.SentAt)
+						.Select(m => m.Text)
+						.FirstOrDefaultAsync(),
+						LastMessageAt = await _db.Messages
+						.Where(m => m.SenderId == id || m.RecipientId == id)
+						.OrderByDescending(m => m.SentAt)
+						.Select(m => m.SentAt)
+						.FirstOrDefaultAsync(),
+					});
+				}
+
+				//Fill contact details from Auth service
+				var authResponse = await _authClient.FillContacts(result);
+
+				if (authResponse is ObjectResult objectResult && objectResult.StatusCode == 200)
+				{
+					return Ok(authResponse);
+				}
+				else
+				{
+					return StatusCode(500,
+						"Failed to retrieve contact details from Auth service");
+				}
+
+			}
+			catch (InvalidOperationException ex)
+			{
+				return StatusCode(500, $"Database operation error: {ex.Message}");
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Unexpected error: {ex.Message}");
+			}
+		}
+		#endregion
 	}
 
 
