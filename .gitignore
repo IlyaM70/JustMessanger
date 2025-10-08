@@ -367,3 +367,4 @@ appsettings.json
 appsettings.Development.json
 appsetting.Production.json
 /MessageService/appsettings.Production.json
+.vscode/settings.json

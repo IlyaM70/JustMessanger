@@ -12,7 +12,7 @@ function App() {
           <Route index element={<ContactList />} />
           <Route path="register" element={<Regin isRegister={true} />} />
           <Route path="login" element={<Regin isRegister={false} />} />
-          <Route path="chat" element={<Chat/>} />
+          <Route path="chat" element={<Chat />} />
         </Route>
       </Routes>
     </BrowserRouter>

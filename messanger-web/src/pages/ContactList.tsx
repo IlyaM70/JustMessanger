@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { jwtDecode } from 'jwt-decode';
+import { useNavigate } from "react-router-dom";
 
 type Contact = {
   userId: string;
@@ -20,6 +21,7 @@ const ContactList: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const token = localStorage.getItem('token') || '';
+  const navigate = useNavigate();
   //get user id from token
   useEffect(() => {
         try
@@ -63,7 +65,10 @@ const ContactList: React.FC = () => {
   fetchContacts();
 }, [currentUserId, token]);
 
-console.log(contacts);
+  const openChat = (recipientId: string, recipientName: string) => {
+    navigate('/chat', { state: { recipientId, recipientName } });
+  }
+
   return (
     <div className="list-group shadow-sm rounded">
       {contacts.length === 0 && (
@@ -72,6 +77,7 @@ console.log(contacts);
 
       {contacts.map((c) => (        
         <button
+          onClick={() => openChat(c.userId, c.userName)}
           key={c.userId}
           className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center`}
         >

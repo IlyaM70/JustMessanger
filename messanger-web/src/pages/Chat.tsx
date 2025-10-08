@@ -2,11 +2,7 @@ import React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { HubConnectionBuilder } from "@microsoft/signalr";
 import { jwtDecode } from 'jwt-decode';
-
-// type ChatProps = {
-//     token: string;
-//     recipientId: string;
-// };
+import { useLocation } from 'react-router-dom';
 
 type Message = {
     text: string;
@@ -29,12 +25,13 @@ interface MessageData {
 
 const Chat: React.FC = () => {
 
+    const location = useLocation();
+    const { recipientId, recipientName } = location.state || {};
     const [currentUserId, setCurrentUserId] = useState<string>('');
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState<Message[]>([]);
-    const token = localStorage.getItem('token') || '';
-    const [recipientId, setRecipientId] = useState('');
+    const token = localStorage.getItem('token') || '';    
 
     //get user id from token
     useEffect(() => {
@@ -164,8 +161,8 @@ const Chat: React.FC = () => {
                 <div className="col-2"></div>
                 <div className="col-8">
                     {error && <div className="text-danger">{error}</div>}
-                    <h1 className="text-center my-4">Recipient Name</h1>
-                    <input value={recipientId} onChange={(e) => setRecipientId(e.target.value)} type="text" className="form-control mb-3" placeholder="Recipient ID" />
+                    <h1 className="text-center my-4">{recipientName}</h1>
+                    {/* <input value={recipientId} onChange={(e) => setRecipientId(e.target.value)} type="text" className="form-control mb-3" placeholder="Recipient ID" /> */}
                     <div id="chat" ref={chatRef} className="border rounded p-3 mb-3" style={{ height: '400px', overflowY: 'scroll' }}>
                         {/* Messages will be displayed here */}     
                         {messages.map((msg, index) => (

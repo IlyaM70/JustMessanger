@@ -19,7 +19,6 @@ const Layout: React.FC = () => {
         <Link to="/" className="mr-4">Home</Link>        
         <Link to="/register">Register</Link>
         <Link to="/login">Login</Link>
-        <Link to="/chat">Chat</Link>
         <button onClick={LogOut} className="btn-primary">Log out</button>
       </nav>
 
