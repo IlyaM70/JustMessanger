@@ -26,12 +26,14 @@ interface MessageData {
 const Chat: React.FC = () => {
 
     const location = useLocation();
-    const { recipientId, recipientName } = location.state || {};
+    const [recipientId, setRecipientId] = useState<string>(location.state?.recipientId || '');
+    const [recipientName, setRecipientName] = useState<string>(location.state?.recipientName || 'New Chat');
     const [currentUserId, setCurrentUserId] = useState<string>('');
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState<Message[]>([]);
-    const token = localStorage.getItem('token') || '';    
+    const token = localStorage.getItem('token') || '';
+    const [emailInput, setEmailInput] = useState('');
 
     //get user id from token
     useEffect(() => {
@@ -55,6 +57,7 @@ const Chat: React.FC = () => {
 
     //get message history  
     useEffect(() => {
+        if (!currentUserId || !recipientId) return; // Don't call API if userId or recipientId isn't ready
         const fetchHistory = async () => {
             try {
                 const response = await fetch(
@@ -83,6 +86,7 @@ const Chat: React.FC = () => {
 
     //set up web socket connection
     useEffect(() => {
+        if (!currentUserId || !recipientId) return; // Don't call API if userId or recipientId isn't ready
         const connection = new HubConnectionBuilder()
             .withUrl(`https://localhost:7136/messagesHub?userId=${currentUserId}`, {
                 accessTokenFactory: () => token,
@@ -91,7 +95,7 @@ const Chat: React.FC = () => {
             .build();
 
         connection.start().then(() => {
-            console.log("Connected to SignalR hub");
+            //console.log("Connected to SignalR hub");
 
             connection.on("ReceiveMessage", (msg) => {
                 setMessages((prevMessages) => [...prevMessages, msg]);
@@ -131,11 +135,10 @@ const Chat: React.FC = () => {
                     text: message,
                 }),
             });
-
-            const data = await response.json();
-
+            
             if (!response.ok) {
-
+                
+                const data = await response.json();
                 if (data.errors) {
                     setError(Object.values(data.errors).flat().join(' '));
                     return;
@@ -155,6 +158,28 @@ const Chat: React.FC = () => {
         AppendMessage(message, true);
     }
 
+    const getRecipientByEmail = async () => {
+        try {
+            const response = await fetch(`https://localhost:7135/api/Auth/getContactByEmail?email=${emailInput}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                setError('Failed to fetch recipient');
+                return;
+            }
+
+            const data = await response.json();
+            setRecipientId(data.userId);
+            setRecipientName(data.userName);
+        } catch (error) {
+            setError('Error fetching recipient: ' + error);
+        }
+    }
+
     return (
         <div className="container-xl">
             <div className="row">
@@ -162,7 +187,14 @@ const Chat: React.FC = () => {
                 <div className="col-8">
                     {error && <div className="text-danger">{error}</div>}
                     <h1 className="text-center my-4">{recipientName}</h1>
-                    {/* <input value={recipientId} onChange={(e) => setRecipientId(e.target.value)} type="text" className="form-control mb-3" placeholder="Recipient ID" /> */}
+                    {/* If new chat enter recipient email */}
+                    {!recipientId && 
+                        <div className="input-group mb-3">
+                        <input value={emailInput} onChange={(e) => setEmailInput(e.target.value)} type="text" className="form-control" placeholder="Recipient email..." />
+                        <button onClick={getRecipientByEmail} className="btn btn-primary" type="button">Search</button>
+                    </div>
+                    
+                    }
                     <div id="chat" ref={chatRef} className="border rounded p-3 mb-3" style={{ height: '400px', overflowY: 'scroll' }}>
                         {/* Messages will be displayed here */}     
                         {messages.map((msg, index) => (
@@ -172,8 +204,8 @@ const Chat: React.FC = () => {
                         )) }
                     </div>
                     <div className="input-group mb-3">
-                        <input value={message} onChange={(e) => setMessage(e.target.value)} type="text" className="form-control" placeholder="Type your message..." />
-                        <button onClick={Send} className="btn btn-primary" type="button">Send</button>
+                        <input disabled={!recipientId} value={message} onChange={(e) => setMessage(e.target.value)} type="text" className="form-control" placeholder="Type your message..." />
+                        <button disabled={!recipientId} onClick={Send} className="btn btn-primary" type="button">Send</button>
                     </div>
                 </div>
                 <div className="col-2"></div>

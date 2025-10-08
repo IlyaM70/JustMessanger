@@ -1,12 +1,12 @@
 ﻿using AuthService.Data;
 using AuthService.Models;
 using AuthService.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using MessageService.Models;
 
 
 namespace AuthService.Controllers
@@ -185,6 +185,25 @@ namespace AuthService.Controllers
 			return Ok(contacts);
 		}
 
+		#endregion
+
+		#region GetContactByEmail		
+		[HttpGet("getcontactbyemail")]
+		public IActionResult GetContactByEmail([FromQuery] string email)
+		{
+			var user = _db.Users.FirstOrDefault(u => u.Email == email);
+			if (user == null)
+			{
+				return NotFound("User was not found");
+			}
+			Contact contact = new Contact
+			{
+				UserId = user.Id,
+				UserName = user.UserName,
+				Email = user.Email
+			};
+			return Ok(contact);
+		}
 		#endregion
 
 	}

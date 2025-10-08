@@ -69,8 +69,16 @@ const ContactList: React.FC = () => {
     navigate('/chat', { state: { recipientId, recipientName } });
   }
 
+  const newChat = () => {
+    navigate('/chat');
+  }
+
   return (
-    <div className="list-group shadow-sm rounded">
+    <>
+    <div className="d-flex">
+      <button className="flex-start" onClick={newChat}>New Chat</button>
+    </div>
+     <div className="list-group shadow-sm rounded">
       {contacts.length === 0 && (
         <div className="text-center text-muted py-3">No contacts yet</div>
       )}
@@ -95,6 +103,8 @@ const ContactList: React.FC = () => {
         </button>
       ))}
     </div>
+    </>
+   
   );
 };
 
