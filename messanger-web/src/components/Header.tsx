@@ -1,21 +1,63 @@
-import React from "react";
+import { jwtDecode } from 'jwt-decode';
+import React, { useEffect, useState } from 'react';
+
+interface TokenPayload {
+    uid: string;
+    email: string;
+    expiration: number;
+}
+
 
 const Header: React.FC = () => {
+
+  const token = localStorage.getItem('token') || '';
+  const [currentUserId, setCurrentUserId] = useState<string>('');
+  //get user id from token
+  useEffect(() => {
+        try
+        {
+            const decoded = jwtDecode<TokenPayload>(token);            
+            setCurrentUserId(decoded.uid);
+
+        }
+        catch (error)
+        {
+            console.error("Invalid token:", error);
+        }
+  }, [token]);
+
+
+    const LogOut = () => {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+    }
+
   return (
-    <header className="py-3 bg-white shadow-sm">
-      <div className="container d-flex align-items-center">
-        <div className="d-flex align-items-center gap-3">
-          <div style={{width:44, height:44}} className="rounded d-flex align-items-center justify-content-center" >
-            <div style={{background:"linear-gradient(135deg,#5568ff,#7b61ff)", width:44, height:44, borderRadius:12}} className="d-flex align-items-center justify-content-center text-white fw-bold">JM</div>
-          </div>
+    <header className="top-nav">
+      <div className="nav-inner container d-flex align-items-center">
+        <a className="brand" href="/">
+          <div className="logo">JM</div>
           <div>
-            <h5 className="mb-0">JustMessenger</h5>
-            <small className="text-muted">Lightweight chat for hackers & humans</small>
+            <div style={{fontWeight:700}}>Just Messenger</div>
+            <small className="small-muted">Lightweight chat for hackers & humans</small>
           </div>
-        </div>
-        <div className="ms-auto d-flex gap-2 align-items-center">
-          <button className="btn btn-outline-secondary btn-sm">Account</button>
-        </div>
+        </a>
+
+        <nav className="nav-links ms-auto d-none d-md-flex">
+          <a href="/" className="small-muted">Home</a>
+          {!currentUserId && 
+          <>
+          <a href="/register" className="small-muted">Register</a>
+          <a href="/login" className="small-muted">Login</a>
+          </>}
+
+          {currentUserId &&
+          <div>
+            <button onClick={LogOut} className="btn btn-pill btn-outline-secondary">Log out</button>
+          </div>
+          }
+        </nav>
+
       </div>
     </header>
   );

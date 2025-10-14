@@ -181,37 +181,67 @@ const Chat: React.FC = () => {
     }
 
     return (
-        <div className="container-xl">
-            <div className="row">
-                <div className="col-2"></div>
-                <div className="col-8">
-                    {error && <div className="text-danger">{error}</div>}
-                    <h1 className="text-center my-4">{recipientName}</h1>
-                    {/* If new chat enter recipient email */}
-                    {!recipientId && 
-                        <div className="input-group mb-3">
-                        <input value={emailInput} onChange={(e) => setEmailInput(e.target.value)} type="text" className="form-control" placeholder="Recipient email..." />
-                        <button onClick={getRecipientByEmail} className="btn btn-primary" type="button">Search</button>
-                    </div>
-                    
-                    }
-                    <div id="chat" ref={chatRef} className="border rounded p-3 mb-3" style={{ height: '400px', overflowY: 'scroll' }}>
-                        {/* Messages will be displayed here */}     
-                        {messages.map((msg, index) => (
-                            <div key={index} className={`mb-2 ${msg.isOwn ? 'text-end' : 'text-start'}`}>
-                                <span className={`badge ${msg.isOwn ? 'bg-primary' : 'bg-secondary'}`}>{msg.text}</span>
+        <div className="page-container">
+            <div className="chat-layout">
+                {/* Contact column - for future */}
+                <div></div>
+
+                <div className="chat-column">
+                    <div className="chat-panel">
+                        <div className="panel-header">
+                            <div style={{display:'flex', gap:12, alignItems:'center'}}>
+                                <div style={{width:44, height:44, borderRadius:10, background:'#eef3ff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700}}>
+                                    {recipientName?.slice(0,2).toUpperCase()}
+                                </div>
+                                <div>
+                                    <div className="title">{recipientName}</div>
+                                    <div className="sub small-muted">last seen recently</div>
+                                </div>
                             </div>
-                        )) }
-                    </div>
-                    <div className="input-group mb-3">
-                        <input disabled={!recipientId} value={message} onChange={(e) => setMessage(e.target.value)} type="text" className="form-control" placeholder="Type your message..." />
-                        <button disabled={!recipientId} onClick={Send} className="btn btn-primary" type="button">Send</button>
+                        </div>
+
+                        <div className="messages-area" id="chat" ref={chatRef} style={{minHeight: 260}}>
+                            {error && <div className="text-danger">{error}</div>}
+                            {/* If new chat enter recipient email */}
+                            {!recipientId && 
+                                <div className="center-placeholder">
+                                    <div style={{maxWidth:420}}>
+                                        <h5>Start a new chat</h5>
+                                        <p className="small-muted">Find recipient by email</p>
+                                        <div className="d-flex gap-2">
+                                            <input value={emailInput} onChange={(e) => setEmailInput(e.target.value)} className="form-control input-rounded" placeholder="Recipient email..." />
+                                            <button onClick={getRecipientByEmail} className="btn btn-pill btn-outline-primary" type="button">Search</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            {/* Messages */}
+                            {messages.map((msg, index) => (
+                                <div key={index} className={`msg-row ${msg.isOwn ? 'own' : ''}`}>
+                                    {!msg.isOwn && <div className="avatar-sm">{recipientName?.slice(0,1).toUpperCase()}</div>}
+                                    <div className={`msg-bubble ${msg.isOwn ? 'right' : 'left'}`}>
+                                        <div>{msg.text}</div>
+                                        <div className={msg.isOwn ? 'msg-time' : 'msg-time-left'}>{/* you can add time if message object has it */}</div>
+                                    </div>
+                                    {msg.isOwn && <div style={{width:36}}></div>}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="chat-input">
+                            <div className="input-flex">
+                                <input disabled={!recipientId} value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e)=>{ if (e.key === 'Enter') Send(); }} type="text" className="form-control input-rounded" placeholder={recipientId ? "Type your message..." : "Select or search a recipient"} />
+                            </div>
+                            <div>
+                                <button disabled={!recipientId} onClick={Send} className="btn btn-send" type="button">Send</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div className="col-2"></div>
             </div>
-
-    </div>);
+        </div>
+    );
 }
 
 export default Chat;

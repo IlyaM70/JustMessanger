@@ -11,8 +11,9 @@ type Contact = {
 };
 
 interface TokenPayload {
-    uid: string;
+    sub: string;
     email: string;
+    uid: string;
     expiration: number;
 }
 
@@ -20,6 +21,7 @@ const ContactList: React.FC = () => {
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [currentUserName, setCurrentUserName] = useState<string>('JM');
   const token = localStorage.getItem('token') || '';
   const navigate = useNavigate();
   //get user id from token
@@ -28,6 +30,7 @@ const ContactList: React.FC = () => {
         {
             const decoded = jwtDecode<TokenPayload>(token);            
             setCurrentUserId(decoded.uid);
+            setCurrentUserName(decoded.sub);
         }
         catch (error)
         {
@@ -74,37 +77,53 @@ const ContactList: React.FC = () => {
   }
 
   return (
-    <>
-    <div className="d-flex">
-      <button className="flex-start" onClick={newChat}>New Chat</button>
-    </div>
-     <div className="list-group shadow-sm rounded">
-      {contacts.length === 0 && (
-        <div className="text-center text-muted py-3">No contacts yet</div>
-      )}
-
-      {contacts.map((c) => (        
-        <button
-          onClick={() => openChat(c.userId, c.userName)}
-          key={c.userId}
-          className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center`}
-        >
-          <div>            
-            <div className="fw-bold">{c.userName}</div>
-            <div className="text-muted small text-truncate" style={{ maxWidth: "200px" }}>
-              {c.lastMessage}
-            </div>
+    <div className="contact-card">
+      <div className="head">
+        <div style={{display:'flex', alignItems:'center', gap:12}}>
+          <div className="avatar-sm">{currentUserName?.slice(0,2).toUpperCase()}</div>
+          <div>
+            <div style={{fontWeight:700}}>You</div>
+            <small className="small-muted">Online</small>
           </div>
-          {c.lastMessageAt && (
-            <small className="text-muted">
-              {new Date(c.lastMessageAt).toLocaleTimeString([], { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-            </small>
-          )}
-        </button>
-      ))}
+        </div>
+
+        {/* for fuuuuture */}
+        {/* <div className="search ms-auto">
+          <input className="form-control input-rounded" placeholder="Search contacts" />
+        </div> */}
+      </div>
+
+      <div className="p-2 d-flex justify-content-between align-items-center">
+        <div className="small-muted">Messages</div>
+        <button className="btn btn-sm btn-outline-primary btn-pill" onClick={newChat}>New chat</button>
+      </div>
+
+      <div className="contact-list-area">
+        {contacts.length === 0 && (
+          <div className="center-placeholder">No contacts yet</div>
+        )}
+
+        {contacts.map((c) => (        
+          <div
+            onClick={() => openChat(c.userId, c.userName)}
+            key={c.userId}
+            className={`contact-item ${/* maybe add active detection later */ ''}`}
+            role="button"
+          >
+            <div className="avatar-sm">{c.userName?.slice(0,2).toUpperCase()}</div>
+            <div className="contact-meta">
+              <div className="contact-name">{c.userName}</div>
+              <div className="contact-preview">{c.lastMessage}</div>
+            </div>
+            {c.lastMessageAt && (
+              <div className="small-muted" style={{minWidth:60, textAlign:'right'}}>
+                {new Date(c.lastMessageAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
-    </>
-   
   );
 };
 

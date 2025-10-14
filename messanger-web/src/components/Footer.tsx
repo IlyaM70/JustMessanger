@@ -1,9 +1,11 @@
-import React from "react";
+import React from 'react';
 
-const Footer: React.FC = () => (
-  <footer className="py-3 text-center text-muted" style={{fontSize:13}}>
-    © {new Date().getFullYear()} JustMessenger — built with ❤️.
-  </footer>
-);
+const Footer: React.FC = () => {
+    return (
+        <footer className="app-footer">
+            <div>© {new Date().getFullYear()} Just Messenger — built with ❤️</div>
+        </footer>
+    );
+};
 
 export default Footer;

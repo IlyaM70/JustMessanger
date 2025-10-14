@@ -85,49 +85,49 @@ const Regin: React.FC<LoginProps> = ({ isRegister}) => {
         }
     };
 
-
-
     return (
-        <div className="container-xl">
-            <div className="row">
-                <div className="col-3"></div>
-                <div className="col-6">
-                    <h1 className="text-center my-3">{isRegister? "Register":"Login"}</h1>
-                    {isRegister &&
-                        <input type="text"
-                        className="form-control my-2"
-                        placeholder="Username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                    />}
-                    <input type="text"
-                        className="form-control my-2"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                    />
-                    <input type="password"
-                        className="form-control my-2"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
-                    {isRegister &&
-                        <button className="btn btn-primary w-100 my-2" onClick={registerHandler}>Register</button>}
-                    {!isRegister &&
-                    <button className="btn btn-primary w-100 my-2" onClick={loginHandler}>Login</button>}
-                    {error && <div className="text-danger">{error}</div>}
-                    {success && <div className="text-success">{success}</div>}
+        <div className="page-container">
+            <div className="row justify-content-center">
+                <div className="col-lg-5 col-md-7">
+                    <div className="card" style={{borderRadius:12, boxShadow:'0 10px 30px rgba(33,41,66,0.06)'}}>
+                        <div className="p-4">
+                            <h3 className="text-center mb-2">{isRegister? "Create account":"Welcome back"}</h3>
+                            <p className="text-center small-muted mb-3">{isRegister ? 'Register to start chatting' : 'Sign in to continue'}</p>
 
+                            {isRegister &&
+                                <input type="text"
+                                className="form-control my-2 input-rounded"
+                                placeholder="Username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                            />}
+
+                            <input type="text"
+                                className="form-control my-2 input-rounded"
+                                placeholder="Email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                            <input type="password"
+                                className="form-control my-2 input-rounded"
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                            {isRegister &&
+                                <button className="btn btn-primary w-100 my-2 btn-send" onClick={registerHandler}>Register</button>}
+                            {!isRegister &&
+                            <button className="btn btn-primary w-100 my-2 btn-send" onClick={loginHandler}>Login</button>}
+
+                            {error && <div className="text-danger small mt-2">{error}</div>}
+                            {success && <div className="text-success small mt-2">{success}</div>}
+                        </div>
+                    </div>
                 </div>
-                <div className="col-3"></div>
             </div>
         </div>
     );
 
 };
-
-
-
 
 export default Regin;
