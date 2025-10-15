@@ -10,7 +10,9 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AuthDbContext>(options =>
-	options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+	//options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+	options.UseSqlite(builder.Configuration.GetConnectionString("Docker")));
+
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options=>
 {
@@ -59,6 +61,18 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+//Apply migrations
+try
+{
+	using var scope = app.Services.CreateScope();
+	var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+	db.Database.Migrate();
+}
+catch (Exception ex)
+{
+	Console.WriteLine($"Migration failed: {ex.Message}");
+}
 
 //seed users
 using (var scope = app.Services.CreateScope())
