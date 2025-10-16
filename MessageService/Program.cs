@@ -1,11 +1,11 @@
+using System;
+using System.Text;
 using MessageService;
 using MessageService.Data;
 using MessageService.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,7 +58,8 @@ builder.Services.AddAuthorization();
 
 
 builder.Services.AddDbContext<MessageDbContext>(opts =>
-    opts.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+    //opts.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+    opts.UseSqlite(builder.Configuration.GetConnectionString("Docker")));
 builder.Services.AddHttpClient<AuthorizationClient>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:7135");
@@ -100,6 +101,19 @@ builder.Services.AddCors(options =>
 
 
 var app = builder.Build();
+
+//Apply migrations
+try
+{
+	using var scope = app.Services.CreateScope();
+	var db = scope.ServiceProvider.GetRequiredService<MessageDbContext>();
+	db.Database.Migrate();
+}
+catch (Exception ex)
+{
+	Console.WriteLine($"Migration failed: {ex.Message}");
+}
+
 
 
 app.UseSwagger();

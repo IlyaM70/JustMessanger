@@ -1,0 +1,13 @@
+version: '3.9'
+services:
+  web:
+    build: .
+    container_name: message_service
+    ports:
+          - "5091:5091" 
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS="http://+:5091"
+    volumes:
+      - ./App_Data:/app/App_Data
+    command: dotnet run --urls "http://+:5091"
