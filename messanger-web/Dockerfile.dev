@@ -1,0 +1,15 @@
+FROM node:18-alpine
+WORKDIR /app
+
+# install dependencies
+COPY package*.json ./
+RUN npm ci
+
+# mount source via docker-compose for live edits
+COPY . .
+
+# expose Vite dev server default port
+EXPOSE 5173
+
+# start dev server listening on all interfaces (required for container access)
+CMD ["npm", "run", "dev", "--", "--host"]
