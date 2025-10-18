@@ -368,3 +368,18 @@ appsettings.Development.json
 appsetting.Production.json
 /MessageService/appsettings.Production.json
 .vscode/settings.json
+
+
+# Docker files
+Dockerfile
+docker-compose.yml
+**/Dockerfile
+**/docker-compose.yml
+.dockerignore
+**/.dockerignore
+AuthService/App_Data/app.db
+AuthService/App_Data/app.db-shm
+AuthService/App_Data/app.db-wal
+MessageService/App_Data/app.db
+MessageService/App_Data/app.db-shm
+MessageService/App_Data/app.db-wal
