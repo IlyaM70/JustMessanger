@@ -377,9 +377,5 @@ docker-compose.yml
 **/docker-compose.yml
 .dockerignore
 **/.dockerignore
-AuthService/App_Data/app.db
-AuthService/App_Data/app.db-shm
-AuthService/App_Data/app.db-wal
-MessageService/App_Data/app.db
-MessageService/App_Data/app.db-shm
-MessageService/App_Data/app.db-wal
+AuthService/App_Data/
+MessageService/App_Data/
