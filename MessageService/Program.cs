@@ -80,8 +80,8 @@ builder.Services.AddAuthorization();
 
 
 builder.Services.AddDbContext<MessageDbContext>(opts =>
-    //opts.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
-    opts.UseSqlite(builder.Configuration.GetConnectionString("Default")));
+    opts.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+    //opts.UseSqlite(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddHttpClient<AuthorizationClient>(client =>
 {
 	var baseUrl = builder.Configuration["AuthService:BaseUrl"];
