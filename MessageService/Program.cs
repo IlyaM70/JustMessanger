@@ -10,6 +10,28 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+// register CORS policy
+var serviceUrls = new[]
+{
+	builder.Configuration["WebClient:BaseUrl"],
+	builder.Configuration["MessageService:BaseUrl"],
+	builder.Configuration["AuthService:BaseUrl"]
+};
+
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("DefaultPolicy", policy =>
+	{
+		policy.WithOrigins(serviceUrls.Where(u => !string.IsNullOrEmpty(u)).ToArray())
+			  .AllowAnyHeader()
+			  .AllowAnyMethod()
+			  .AllowCredentials();
+	});
+});
+
+
+
 builder.Services.AddControllers();
 
 #region Add Authentication
@@ -59,10 +81,11 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<MessageDbContext>(opts =>
     //opts.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
-    opts.UseSqlite(builder.Configuration.GetConnectionString("Docker")));
+    opts.UseSqlite(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddHttpClient<AuthorizationClient>(client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7135");
+	var baseUrl = builder.Configuration["AuthService:BaseUrl"];
+	client.BaseAddress = new Uri(baseUrl);
 });
 
 builder.Services.AddSignalR();
@@ -87,19 +110,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.WithOrigins("https://localhost:7097", "http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
-});
-
-
-
 var app = builder.Build();
 
 //Apply migrations
@@ -122,7 +132,7 @@ app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
 app.UseRouting();
-app.UseCors(); // Call this *before* app.UseAuthorization()
+app.UseCors("DefaultPolicy"); // Call this *before* app.UseAuthorization()
 
 app.UseAuthentication(); // MUST come before UseAuthorization
 app.UseAuthorization();

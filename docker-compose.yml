@@ -12,10 +12,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5027
-      - ConnectionStrings__DefaultConnection=Data Source=/app/App_Data/auth.db
+      - ConnectionStrings__Default=Data Source=/app/App_Data/app.db
     volumes:
-      - ./data/auth:/app/App_Data   # persist sqlite (or other files) on host
-    restart: unless-stopped
+      - ./AuthService/App_Data:/app/App_Data   # persist sqlite (or other files) on host
+    
 
   # Messaging service (ASP.NET or Node; here assumed ASP.NET)
   messenger:
@@ -28,22 +28,21 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5091
-      - ConnectionStrings__DefaultConnection=Data Source=/app/App_Data/msg.db
+      - ConnectionStrings__Default=Data Source=/app/App_Data/app.db
     volumes:
-      - ./data/messaging:/app/App_Data
+      - ./MessageService/App_Data:/app/App_Data
     depends_on:
       - auth
-    restart: unless-stopped
+   
 
   # Frontend (Vite -> production served by nginx)
-  client:
+  web-client:
     build:
       context: ./messanger-web        # <-- folder with your Vite project + Dockerfile
       dockerfile: Dockerfile
-    container_name: client
+    container_name: web-client
     ports:
       - "5173:80"                    # host:container (nginx serves on container port 80)
     environment:
       - NODE_ENV=production
-      - VITE_API_URL=http://auth:5027  # use service name for internal network DNS
-    restart: unless-stopped
+   

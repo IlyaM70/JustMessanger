@@ -9,9 +9,29 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// register CORS policy
+var serviceUrls = new[]
+{
+	builder.Configuration["AuthService:BaseUrl"],
+	builder.Configuration["WebClient:BaseUrl"],
+	builder.Configuration["MessageService:BaseUrl"]
+};
+
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("DefaultPolicy", policy =>
+	{
+		policy.WithOrigins(serviceUrls.Where(u => !string.IsNullOrEmpty(u)).ToArray())
+			  .AllowAnyHeader()
+			  .AllowAnyMethod()
+			  .AllowCredentials();
+	});
+});
+
+
 builder.Services.AddDbContext<AuthDbContext>(options =>
 	//options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
-	options.UseSqlite(builder.Configuration.GetConnectionString("Docker")));
+	options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
 
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options=>
@@ -49,16 +69,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddTransient<IEmailConfirmator, EmailConfirmator>();
 
-builder.Services.AddCors(options =>
-{
-	options.AddDefaultPolicy(policy =>
-	{
-		policy.WithOrigins("http://localhost:5173")
-			  .AllowAnyHeader()
-			  .AllowAnyMethod()
-			  .AllowCredentials();
-	});
-});
+
 
 var app = builder.Build();
 
@@ -133,7 +144,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 
-app.UseCors();
+app.UseCors("DefaultPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -9,6 +9,7 @@ type LoginProps = {
 
 const Regin: React.FC<LoginProps> = ({ isRegister}) => {
 
+    const authApiUrl = 'http://localhost:5027/api/Auth';
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');  
@@ -21,7 +22,7 @@ const Regin: React.FC<LoginProps> = ({ isRegister}) => {
 
         try
         {
-            const response = await fetch('http://localhost:5027/api/Auth/login', {
+            const response = await fetch(`${authApiUrl}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -57,15 +58,15 @@ const Regin: React.FC<LoginProps> = ({ isRegister}) => {
         setSuccess('');
 
         try {
-            const response = await fetch('http://localhost:5027/api/Auth/register', {
+            const response = await fetch(`${authApiUrl}/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, email, password })
             });
 
-            console.log(response);
+            //console.log(response);
             const data = await response.json();
-            console.log(data);
+            //console.log(data);
 
             if (!response.ok) {
 

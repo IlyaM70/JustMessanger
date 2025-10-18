@@ -19,6 +19,8 @@ interface TokenPayload {
 
 const ContactList: React.FC = () => {
 
+  const messageApiBase = 'http://localhost:5091';
+  const messageApiUrl = `${messageApiBase}/api/Message`;
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const [currentUserName, setCurrentUserName] = useState<string>('JM');
@@ -46,7 +48,7 @@ const ContactList: React.FC = () => {
   const fetchContacts = async () => {
     try {
       const response = await fetch(
-        `https://localhost:7136/api/Message/contacts?userId=${currentUserId}`,
+        `${messageApiUrl}/contacts?userId=${currentUserId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -25,6 +25,9 @@ interface MessageData {
 
 const Chat: React.FC = () => {
 
+    const authApiUrl = 'http://localhost:5027/api/Auth';
+    const messageApiBase = 'http://localhost:5091';
+    const messageApiUrl = `${messageApiBase}/api/Message`;
     const location = useLocation();
     const [recipientId, setRecipientId] = useState<string>(location.state?.recipientId || '');
     const [recipientName, setRecipientName] = useState<string>(location.state?.recipientName || 'New Chat');
@@ -61,7 +64,7 @@ const Chat: React.FC = () => {
         const fetchHistory = async () => {
             try {
                 const response = await fetch(
-                    `https://localhost:7136/api/Message/history?userId=${currentUserId}&otherUserId=${recipientId}`,
+                    `${messageApiUrl}/history?userId=${currentUserId}&otherUserId=${recipientId}`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -88,7 +91,7 @@ const Chat: React.FC = () => {
     useEffect(() => {
         if (!currentUserId || !recipientId) return; // Don't call API if userId or recipientId isn't ready
         const connection = new HubConnectionBuilder()
-            .withUrl(`https://localhost:7136/messagesHub?userId=${currentUserId}`, {
+            .withUrl(`${messageApiBase}/messagesHub?userId=${currentUserId}`, {
                 accessTokenFactory: () => token,
             })
             .withAutomaticReconnect()
@@ -124,7 +127,7 @@ const Chat: React.FC = () => {
     {
         try
         {
-            const response = await fetch(`https://localhost:7136/api/Message/send`, {
+            const response = await fetch(`${messageApiUrl}/send`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -160,7 +163,7 @@ const Chat: React.FC = () => {
 
     const getRecipientByEmail = async () => {
         try {
-            const response = await fetch(`https://localhost:7135/api/Auth/getContactByEmail?email=${emailInput}`, {
+            const response = await fetch(`${authApiUrl}/getContactByEmail?email=${emailInput}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
