@@ -10,28 +10,36 @@ interface TokenPayload {
 
 const Header: React.FC = () => {
 
-  const token = localStorage.getItem('token') || '';
-  const [currentUserId, setCurrentUserId] = useState<string>('');
-  //get user id from token
-  useEffect(() => {
-        try
-        {
-            const decoded = jwtDecode<TokenPayload>(token);            
-            setCurrentUserId(decoded.uid);
+  const [token, setToken] = useState(localStorage.getItem('token') || '');
+  const [currentUserId, setCurrentUserId] = useState('');
 
-        }
-        catch (error)
-        {
-            console.error("Invalid token:", error);
-        }
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setToken(localStorage.getItem('token') || '');
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      try {
+        const decoded = jwtDecode<TokenPayload>(token);
+        setCurrentUserId(decoded.uid);
+      } catch {
+        setCurrentUserId('');
+      }
+    } else {
+      setCurrentUserId('');
+    }
   }, [token]);
 
-
-    const LogOut = () => {
-        localStorage.removeItem("token");
-        window.location.href = "/login";
-    }
-
+  const LogOut = () => {
+    localStorage.removeItem('token');
+    setToken('');
+    window.location.href = '/login';
+  };
   return (
     <header className="top-nav">
       <div className="nav-inner container d-flex align-items-center">
