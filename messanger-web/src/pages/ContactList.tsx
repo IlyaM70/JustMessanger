@@ -78,9 +78,13 @@ const ContactList: React.FC = () => {
     navigate('/chat');
   }
 
-  if (!currentUserId || currentUserId === '') {
+  useEffect(() => {
+      if (!currentUserId || currentUserId === '') {
     navigate('/login');
   }
+  }, [currentUserId, navigate]);
+
+
 
   return (
     <div className="contact-card">
