@@ -379,3 +379,4 @@ docker-compose.yml
 **/.dockerignore
 AuthService/App_Data/
 MessageService/App_Data/
+AuthService/command-snippets.txt
