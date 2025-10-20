@@ -26,6 +26,17 @@ const ContactList: React.FC = () => {
   const [currentUserName, setCurrentUserName] = useState<string>('JM');
   const token = localStorage.getItem('token') || '';
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  if (!loading && (!currentUserId || currentUserId === '')) {
+    navigate('/login');
+  }
+}, [loading, currentUserId, navigate]);
+
+
+
+
   //get user id from token
   useEffect(() => {
         try
@@ -38,6 +49,9 @@ const ContactList: React.FC = () => {
         {
             console.error("Invalid token:", error);
         }
+        finally {
+        setLoading(false);
+      }
   }, [token]);
 
   
@@ -78,13 +92,9 @@ const ContactList: React.FC = () => {
     navigate('/chat');
   }
 
-  useEffect(() => {
-      if (!currentUserId || currentUserId === '') {
-    navigate('/login');
+  if (loading) {
+    return <div>Loading...</div>;
   }
-  }, [currentUserId, navigate]);
-
-
 
   return (
     <div className="contact-card">
