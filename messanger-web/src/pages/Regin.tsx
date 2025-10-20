@@ -1,5 +1,6 @@
 import React from 'react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 
 
 type LoginProps = {
@@ -9,12 +10,16 @@ type LoginProps = {
 
 const Regin: React.FC<LoginProps> = ({ isRegister}) => {
 
-    const authApiUrl = 'http://localhost:5027/api/Auth';
+    const authApiBase = 'https://just-messenger-auth.azurewebsites.net/';
+    const authApiUrl = `${authApiBase}/api/Auth`;
+    const messageApiBase = 'https://just-messenger-messages.azurewebsites.net/';
+    const messageApiUrl = `${messageApiBase}/api/Message`;
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');  
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const navigate = useNavigate();
 
     const loginHandler = async () => {
         setError('');
@@ -46,6 +51,7 @@ const Regin: React.FC<LoginProps> = ({ isRegister}) => {
 
             localStorage.setItem('token', data.token);
             setSuccess('Login successful!');
+            navigate('/');
         }
         catch (error)
         {
@@ -80,6 +86,7 @@ const Regin: React.FC<LoginProps> = ({ isRegister}) => {
             }
             
             setSuccess('Register successful!');
+            navigate('/login');
         }
         catch (error) {
             setError('Network error');

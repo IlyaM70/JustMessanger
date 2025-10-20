@@ -25,8 +25,9 @@ interface MessageData {
 
 const Chat: React.FC = () => {
 
-    const authApiUrl = 'http://localhost:5027/api/Auth';
-    const messageApiBase = 'http://localhost:5091';
+    const authApiBase = 'https://just-messenger-auth.azurewebsites.net/';
+    const authApiUrl = `${authApiBase}/api/Auth`;
+    const messageApiBase = 'https://just-messenger-messages.azurewebsites.net/';
     const messageApiUrl = `${messageApiBase}/api/Message`;
     const location = useLocation();
     const [recipientId, setRecipientId] = useState<string>(location.state?.recipientId || '');

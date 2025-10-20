@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { jwtDecode } from 'jwt-decode';
-import { useNavigate } from "react-router-dom";
+import { redirect, useNavigate } from "react-router-dom";
 
 type Contact = {
   userId: string;
@@ -19,7 +19,9 @@ interface TokenPayload {
 
 const ContactList: React.FC = () => {
 
-  const messageApiBase = 'http://localhost:5091';
+  const authApiBase = 'https://just-messenger-auth.azurewebsites.net/';
+  const authApiUrl = `${authApiBase}/api/Auth`;
+  const messageApiBase = 'https://just-messenger-messages.azurewebsites.net/';
   const messageApiUrl = `${messageApiBase}/api/Message`;
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>('');
@@ -76,6 +78,10 @@ const ContactList: React.FC = () => {
 
   const newChat = () => {
     navigate('/chat');
+  }
+
+  if (!currentUserId || !token) {
+    navigate('/login');
   }
 
   return (
