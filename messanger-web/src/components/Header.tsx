@@ -44,7 +44,11 @@ const Header: React.FC = () => {
         </a>
 
         <nav className="nav-links ms-auto d-none d-md-flex">
-          <a href="/" className="small-muted">Home</a>
+          {currentUserId && 
+            <>
+            <a href="/" className="small-muted">Home</a>
+            </>
+          }
           {!currentUserId && 
           <>
           <a href="/register" className="small-muted">Register</a>
