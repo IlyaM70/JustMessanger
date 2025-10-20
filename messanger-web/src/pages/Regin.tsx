@@ -11,9 +11,7 @@ type LoginProps = {
 const Regin: React.FC<LoginProps> = ({ isRegister}) => {
 
     const authApiBase = 'https://just-messenger-auth.azurewebsites.net/';
-    const authApiUrl = `${authApiBase}/api/Auth`;
-    const messageApiBase = 'https://just-messenger-messages.azurewebsites.net/';
-    const messageApiUrl = `${messageApiBase}/api/Message`;
+    const authApiUrl = `${authApiBase}/api/Auth`;   
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');  
