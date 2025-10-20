@@ -78,10 +78,12 @@ builder.Services.AddAuthentication(options =>
 #endregion
 builder.Services.AddAuthorization();
 
+	
+builder.Services.AddDbContext<MessageDbContext>(options =>
+	options.UseSqlServer(builder.Configuration.GetConnectionString("Default"),
+	sqlOptions => sqlOptions.EnableRetryOnFailure())
+	);
 
-builder.Services.AddDbContext<MessageDbContext>(opts =>
-    opts.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
-    //opts.UseSqlite(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddHttpClient<AuthorizationClient>(client =>
 {
 	var baseUrl = builder.Configuration["AuthService:BaseUrl"];

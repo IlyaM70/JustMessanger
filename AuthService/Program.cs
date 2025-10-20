@@ -30,8 +30,10 @@ builder.Services.AddCors(options =>
 
 
 builder.Services.AddDbContext<AuthDbContext>(options =>
-	options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
-	//options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
+	options.UseSqlServer(builder.Configuration.GetConnectionString("Default"),
+	sqlOptions => sqlOptions.EnableRetryOnFailure())
+	);
+	
 
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options=>
