@@ -33,20 +33,16 @@ Each service is published as a **container image** on GitHub Container Registry 
 
 ## 🧠 Tech Stack
 
-### Backend
-- C#, .NET 8 (ASP.NET Core Web API)
-- Entity Framework Core (Code First Migrations)
-- Azure SQL Database
-- JWT Authentication
+| Component                 | Choice                | Rationale                                                    |
+| ------------------------- | --------------------- | ------------------------------------------------------------ |
+| **Language & Framework**  | ASP.NET Core          | Proven performance, developer familiarity, strong ecosystem  |
+| **Real-Time Messaging**   | SignalR               | High-level abstraction for WebSocket communication           |
+| **Primary Storage**       | Azure SQL             | Scalable, cost-effective, reliable for structured data       |
+| **CI/CD (Planned)**                 | GitHub Actions        | Simple automation, seamless GitHub integration               |
+| **Unit Testing**          | xUnit & Moq           | Commonly used .NET testing frameworks                        |
+| **Integration Testing (Planned)**   | WebApplicationFactory | Native ASP.NET Core support for integration tests            |
+| **Frontend (Planned)**    | React + React Native  | Strong ecosystem and developer familiarity                   |
 
-### Frontend
-- React + Vite
-- React Router
-
-### DevOps
-- Docker & Docker Compose
-- GitHub Container Registry (GHCR)
-- Azure Web App (for deployment)
 
 ---
 
