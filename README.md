@@ -15,9 +15,19 @@ The system is composed of **three services**, orchestrated using **Docker Compos
 |----------|------|-------------|
 | **Auth Service** | ASP.NET Core Web API | Handles user registration, login, and JWT-based authentication. Connects to Azure SQL Database.
 | **Messenger Service** | ASP.NET Core Web API | Manages user messages (sending, retrieving). Connects to a separate Azure SQL Database.
-| **Web Client** | React Frontend | User-facing interface for login and chatting. Built with React + Vite and deployed in Docker.
+| **Web Client** | React Frontend | User-facing interface for login and chatting. Built with React + Vite
 
-Each service is published as a **container image** on GitHub Container Registry (`ghcr.io/ilyam70/...`) and connected through the internal Docker network.
+
+## 🧱 Note on Architecture
+While **microservices** and **containerization** are often reserved for large-scale distributed systems, they were deliberately used here **as a learning exercise**.  
+This project could easily be implemented as a monolithic application, but separating components into independent services provided valuable hands-on experience with:
+- Containerization and orchestration using **Docker Compose**  
+- Service communication and API design  
+- Deployment pipelines for multiple containerized services  
+- Configuration management across multiple environments  
+
+This architectural choice reflects a **focus on mastering DevOps and distributed systems concepts**, rather than a strict requirement for the app’s scale.
+
 
 ---
 
@@ -26,8 +36,7 @@ Each service is published as a **container image** on GitHub Container Registry 
 - ✅ **Basic message sending and retrieval** via the Messenger service  
 - ✅ **REST API endpoints** for both Auth and Messaging  
 - ✅ **React-based frontend** with navigation, login page, and message UI skeleton  
-- ✅ **Azure SQL Database integration** for persistent user and message data  
-- ✅ **Dockerized deployment** for all three components  
+ 
 
 ---
 
@@ -38,6 +47,7 @@ Each service is published as a **container image** on GitHub Container Registry 
 | **Language & Framework**  | ASP.NET Core          | Proven performance, developer familiarity, strong ecosystem  |
 | **Real-Time Messaging**   | SignalR               | High-level abstraction for WebSocket communication           |
 | **Primary Storage**       | Azure SQL             | Scalable, cost-effective, reliable for structured data       |
+| **Testing Storage**       | SQLite                | Light, no set up for quick testing       |
 | **CI/CD (Planned)**                 | GitHub Actions        | Simple automation, seamless GitHub integration               |
 | **Unit Testing**          | xUnit & Moq           | Commonly used .NET testing frameworks                        |
 | **Integration Testing (Planned)**   | WebApplicationFactory | Native ASP.NET Core support for integration tests            |
