@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+
 
 
 type LoginProps = {
@@ -17,7 +17,7 @@ const Regin: React.FC<LoginProps> = ({ isRegister}) => {
     const [password, setPassword] = useState('');  
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const navigate = useNavigate();
+   
 
     const loginHandler = async () => {
         setError('');
@@ -49,7 +49,7 @@ const Regin: React.FC<LoginProps> = ({ isRegister}) => {
 
             localStorage.setItem('token', data.token);
             setSuccess('Login successful!');
-            navigate('/');
+             window.location.href = '/';
         }
         catch (error)
         {
@@ -84,7 +84,7 @@ const Regin: React.FC<LoginProps> = ({ isRegister}) => {
             }
             
             setSuccess('Register successful!');
-            navigate('/login');
+             window.location.href = '/login';
         }
         catch (error) {
             setError('Network error');
