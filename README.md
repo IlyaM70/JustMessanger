@@ -88,8 +88,8 @@ You can view the live frontend at:
 APIs are deployed separately as container services in Azure.
 
 ### 📚 Next Steps (Planned)
-Improve tests
-Set up CI/CD
-Improve frontend UI/UX
-Mobile client
-Notification service
+- Improve tests
+- Set up CI/CD
+- Improve frontend UI/UX
+- Mobile client
+- Notification service
