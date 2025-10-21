@@ -82,7 +82,7 @@ docker compose up -d
   Web Client: http://localhost:5173
 
 ### 🌐 Deployed Version
-You can view the live frontend at:
+You can view the live demo at:
 🔗 https://just-messenger-app.azurewebsites.net
 
 APIs are deployed separately as container services in Azure.
