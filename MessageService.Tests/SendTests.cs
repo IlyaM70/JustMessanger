@@ -87,21 +87,23 @@ namespace MessageService.Tests
 		[Fact]
 		public async Task Send_Should_SendMessageViaSignalR_WithCorrectPayload()
 		{
+			// Arrange: In-memory database
 			var options = new DbContextOptionsBuilder<MessageDbContext>()
 				.UseInMemoryDatabase("SignalRTestDb")
 				.Options;
 			await using var db = new MessageDbContext(options);
 
+			// Arrange: SignalR hub mocks
 			var hubContext = new Mock<IHubContext<MessagesHub>>();
 			var clients = new Mock<IHubClients>();
 			var clientProxy = new Mock<IClientProxy>();
 			var authClient = new TestAuthorizationClient(new[] { "1", "2" });
 
+			// Capture the payload sent via SignalR
 			object[]? capturedPayload = null;
-
 			clientProxy
 				.Setup(p => p.SendCoreAsync(
-					"ReceiveMessage",
+					It.IsAny<string>(),
 					It.IsAny<object[]>(),
 					It.IsAny<CancellationToken>()))
 				.Callback<string, object[], CancellationToken>((_, args, _) =>
@@ -110,26 +112,30 @@ namespace MessageService.Tests
 				})
 				.Returns(Task.CompletedTask);
 
-			// Controller sends to Group(userId) where userId comes from claims (sender).
-			clients.Setup(c => c.Group("1")).Returns(clientProxy.Object);
+			// Return the client proxy for any group ID
+			clients.Setup(c => c.Group(It.IsAny<string>())).Returns(clientProxy.Object);
 			hubContext.Setup(h => h.Clients).Returns(clients.Object);
 
+			// Arrange: controller with sender ID "1"
 			var controller = CreateController(db, hubContext, authClient, "1");
 
+			// Act: send a message to recipient "2"
 			SendRequest request = new SendRequest
 			{
 				RecipientId = "2",
 				Text = "Hello Test"
 			};
-
-
 			var result = await controller.Send(request);
 
-			clients.Verify(c => c.Group("1"), Times.Once);
-			clientProxy.Verify(p =>
-				p.SendCoreAsync("ReceiveMessage", It.IsAny<object[]>(), It.IsAny<CancellationToken>()),
+			// Assert: SignalR group was called for recipient "2"
+			clients.Verify(c => c.Group("2"), Times.Once);
+			clientProxy.Verify(p => p.SendCoreAsync(
+				"ReceiveMessage",
+				It.IsAny<object[]>(),
+				It.IsAny<CancellationToken>()),
 				Times.Once);
 
+			// Assert: payload is not null and has correct data
 			Assert.NotNull(capturedPayload);
 			Assert.Single(capturedPayload);
 
@@ -143,6 +149,7 @@ namespace MessageService.Tests
 			Assert.True(deserialized["Id"].GetInt32() > 0);
 			Assert.True(deserialized["SentAt"].GetDateTime() <= DateTime.UtcNow);
 
+			// Assert: controller returns Ok
 			Assert.IsType<OkResult>(result);
 		}
 
