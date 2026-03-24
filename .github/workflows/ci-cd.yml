@@ -27,8 +27,8 @@ jobs:
 
       - name: Run Tests
         run: |
-          dotnet test ./AuthService.Tests/AuthService.Tests.csproj --no-build --logger "console;verbosity=detailed"
-          dotnet test ./MessageService.Tests/MessageService.Tests.csproj --no-build --logger "console;verbosity=detailed"
+          dotnet test ./AuthService.Tests/AuthService.Tests.csproj  --logger "console;verbosity=detailed"
+          dotnet test ./MessageService.Tests/MessageService.Tests.csproj  --logger "console;verbosity=detailed"
 
   docker:
     runs-on: ubuntu-latest
