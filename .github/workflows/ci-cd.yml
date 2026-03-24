@@ -2,11 +2,12 @@ name: CI/CD
 
 on:
   push:
-    branches: [ "main", "ci-cd-test" ]
+    branches: ["main", "ci-cd-test"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
+
   build-test:
     runs-on: ubuntu-latest
     steps:
@@ -29,9 +30,9 @@ jobs:
           dotnet test ./AuthService.Tests/AuthService.Tests.csproj --no-build --logger "console;verbosity=detailed"
           dotnet test ./MessageService.Tests/MessageService.Tests.csproj --no-build --logger "console;verbosity=detailed"
 
-    docker:
-      runs-on: ubuntu-latest
-      needs: build-test
+  docker:
+    runs-on: ubuntu-latest
+    needs: build-test
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,47 +55,48 @@ jobs:
           docker build --progress=plain -t ghcr.io/ilyam70/web-client:${GITHUB_SHA::8} ./messanger-web
           docker push ghcr.io/ilyam70/web-client:${GITHUB_SHA::8}
 
-  # deploy:
-  #   runs-on: ubuntu-latest
-  #   needs: docker
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
+  deploy:
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.ref == 'refs/heads/main'   # Only deploy from main
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  #     - name: Login to Azure
-  #       uses: azure/login@v2
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: Set Azure CLI Debug Logging
-  #       run: echo "AZURE_CORE_LOG_LEVEL=debug" >> $GITHUB_ENV
+      - name: Set Azure CLI Debug Logging
+        run: echo "AZURE_CORE_LOG_LEVEL=debug" >> $GITHUB_ENV
 
-  #     - name: Verify Azure Login
-  #       run: az account show --verbose
+      - name: Verify Azure Login
+        run: az account show --verbose
 
-  #     - name: Deploy Auth Service
-  #       run: |
-  #         az webapp config container set \
-  #           --name just-messenger-auth \
-  #           --resource-group JustMessenger \
-  #           --docker-custom-image-name ghcr.io/ilyam70/auth:${GITHUB_SHA::8} \
-  #           --verbose
-  #         az webapp log tail --name just-messenger-auth --resource-group JustMessenger
+      - name: Deploy Auth Service
+        run: |
+          az webapp config container set \
+            --name just-messenger-auth \
+            --resource-group JustMessenger \
+            --docker-custom-image-name ghcr.io/ilyam70/auth:${GITHUB_SHA::8} \
+            --verbose
+          az webapp log tail --name just-messenger-auth --resource-group JustMessenger
 
-  #     - name: Deploy Message Service
-  #       run: |
-  #         az webapp config container set \
-  #           --name just-messenger-messages \
-  #           --resource-group JustMessenger \
-  #           --docker-custom-image-name ghcr.io/ilyam70/messenger:${GITHUB_SHA::8} \
-  #           --verbose
-  #         az webapp log tail --name just-messenger-messages --resource-group JustMessenger
+      - name: Deploy Message Service
+        run: |
+          az webapp config container set \
+            --name just-messenger-messages \
+            --resource-group JustMessenger \
+            --docker-custom-image-name ghcr.io/ilyam70/messenger:${GITHUB_SHA::8} \
+            --verbose
+          az webapp log tail --name just-messenger-messages --resource-group JustMessenger
 
-  #     - name: Deploy Web Client
-  #       run: |
-  #         az webapp config container set \
-  #           --name just-messenger-app \
-  #           --resource-group JustMessenger \
-  #           --docker-custom-image-name ghcr.io/ilyam70/web-client:${GITHUB_SHA::8} \
-  #           --verbose
-  #         az webapp log tail --name just-messenger-app --resource-group JustMessenger
+      - name: Deploy Web Client
+        run: |
+          az webapp config container set \
+            --name just-messenger-app \
+            --resource-group JustMessenger \
+            --docker-custom-image-name ghcr.io/ilyam70/web-client:${GITHUB_SHA::8} \
+            --verbose
+          az webapp log tail --name just-messenger-app --resource-group JustMessenger
