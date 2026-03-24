@@ -8,6 +8,8 @@ on:
 
 jobs:
 
+
+
   build-test:
     runs-on: ubuntu-latest
     steps:
@@ -39,6 +41,15 @@ jobs:
 
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Debug working directory and files
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "List files in current directory:"
+          ls -la
+          echo "List files in AuthService folder:"
+          ls -la AuthService || echo "AuthService folder not found"
 
       - name: Build & Push Auth Service
         run: |
