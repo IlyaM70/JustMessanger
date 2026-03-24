@@ -5,6 +5,17 @@
 **JustMessenger** is a microservices-based messaging web application designed to demonstrate secure user authentication, message exchange, and modular architecture.  
 This MVP (Minimum Viable Product) implements the essential backend and frontend components required for a functioning, containerized chat platform deployed via Docker and Azure.
 
+### Demos
+![Demo](Documentation/regin.gif)
+![Demo](Documentation/startchat.gif)
+![Demo](Documentation/chat.gif)
+![Demo](Documentation/login.png)
+![Demo](Documentation/register.png)
+![Demo](Documentation/startchat.png)
+![Demo](Documentation/chat.png)
+
+
+
 ---
 
 ## 🧩 Architecture
