@@ -42,7 +42,8 @@ jobs:
 
       - name: Build & Push Auth Service
         run: |
-          docker build --progress=plain -t ghcr.io/ilyam70/auth:${GITHUB_SHA::8} -f ./AuthService/Dockerfile ./AuthService
+          cd AuthService
+          docker build --progress=plain -t ghcr.io/ilyam70/auth:${GITHUB_SHA::8} .          
           docker push ghcr.io/ilyam70/auth:${GITHUB_SHA::8}
 
       - name: Build & Push Message Service
