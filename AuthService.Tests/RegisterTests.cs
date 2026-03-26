@@ -158,9 +158,15 @@ namespace AuthService.Tests
 			var result = await controller.Register(request);
 
 			// Assert
-			Assert.IsType<BadRequestObjectResult>(result);
-			Assert.Equal("Email already in use.", (result as BadRequestObjectResult).Value);
+			var badReq = Assert.IsType<BadRequestObjectResult>(result);
 
+			// Extract errors dictionary from anonymous object
+			var prop = badReq.Value.GetType().GetProperty("errors");
+			var errors = prop?.GetValue(badReq.Value) as IDictionary<string, string[]>;
+
+			Assert.NotNull(errors);
+			Assert.True(errors.ContainsKey("Email"));
+			Assert.Contains("Email already in use.", errors["Email"]);
 		}
 		#endregion
 
@@ -190,7 +196,7 @@ namespace AuthService.Tests
 			// Setup CreateAsync to return a failed IdentityResult indicating weak password
 			userManagerMock
 				.Setup(um => um.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
-				.ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Password is too weak." }));
+				.ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Password is too weak.", Code="Password is weak" }));
 			IConfiguration configuration = new ConfigurationManager();
 			EmailConfirmatorMock emailConfirmator = new();
 			AuthController controller = new(authDbContext, userManagerMock.Object, configuration, emailConfirmator);
@@ -207,8 +213,15 @@ namespace AuthService.Tests
 			// Act
 			var result = await controller.Register(request);
 			// Assert
-			Assert.IsType<BadRequestObjectResult>(result);
-			Assert.Equal("Error:  - Password is too weak.\n", (result as BadRequestObjectResult).Value);
+			var badReq = Assert.IsType<BadRequestObjectResult>(result);
+
+			// Extract errors dictionary from anonymous object
+			var prop = badReq.Value.GetType().GetProperty("errors");
+			var errors = prop?.GetValue(badReq.Value) as IDictionary<string, string[]>;
+
+			Assert.NotNull(errors);
+			Assert.True(errors.Count > 0); // There should be at least one error
+			Assert.Contains("Password is too weak.", errors.Values.SelectMany(v => v));
 		}
 		#endregion
 

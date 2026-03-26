@@ -44,9 +44,21 @@ namespace AuthService.Tests
 			var result = controller.Login(loginRequest);
 
 			//Assert
-			Assert.IsType<BadRequestObjectResult>(result);
-			Assert.Equal("Invalid email or password.", (result as BadRequestObjectResult).Value);
+			var badReq = Assert.IsType<BadRequestObjectResult>(result);
 
+			// Cast Value to a Dictionary<string, string[]>
+			var value = badReq.Value as IDictionary<string, string[]>;
+
+			// If casting fails, try extracting 'errors' property via reflection
+			if (value == null)
+			{
+				var prop = badReq.Value.GetType().GetProperty("errors");
+				value = prop?.GetValue(badReq.Value) as IDictionary<string, string[]>;
+			}
+
+			
+			Assert.NotNull(value);
+			Assert.Contains("Invalid email or password.", value["Email"]);
 		}
 		#endregion
 
@@ -97,13 +109,18 @@ namespace AuthService.Tests
 			// Act
 			var result = controller.Login(loginRequest);
 
-			// Assert response
-			Assert.IsType<BadRequestObjectResult>(result);
-			var badReq = result as BadRequestObjectResult;
-			Assert.NotNull(badReq);
-			Assert.Equal("Invalid email or password.", badReq.Value);
+			// Assert
+			var badReq = Assert.IsType<BadRequestObjectResult>(result);
 
-			// Verify CheckPasswordAsync was called once with expected user (matched by email) and password
+			// Extract errors dictionary
+			var prop = badReq.Value.GetType().GetProperty("errors");
+			var errors = prop?.GetValue(badReq.Value) as IDictionary<string, string[]>;
+
+			Assert.NotNull(errors);
+			Assert.True(errors.ContainsKey("Password"));
+			Assert.Contains("Invalid email or password.", errors["Password"]);
+
+			// Verify CheckPasswordAsync was called
 			userManagerMock.Verify(um => um.CheckPasswordAsync(
 				It.Is<ApplicationUser>(u => u.Email == "existinguser@example.com"),
 				"password"), Times.Once);

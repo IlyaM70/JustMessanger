@@ -373,10 +373,10 @@ appsetting.Production.json
 # Docker files
 Dockerfile
 docker-compose.yml
-**/Dockerfile
-**/docker-compose.yml
 .dockerignore
-**/.dockerignore
+#**/Dockerfile
+#**/docker-compose.yml
+#**/.dockerignore
 AuthService/App_Data/
 MessageService/App_Data/
 command-snippets.txt
