@@ -95,7 +95,8 @@ jobs:
             --name just-messenger-auth \
             --resource-group JustMessenger \
             --docker-custom-image-name ghcr.io/ilyam70/auth:${GITHUB_SHA::8} \
-            --verbose         
+            --verbose 
+                    
           az webapp restart --name just-messenger-auth --resource-group JustMessenger
 
       - name: Deploy Message Service
@@ -104,7 +105,8 @@ jobs:
             --name just-messenger-messages \
             --resource-group JustMessenger \
             --docker-custom-image-name ghcr.io/ilyam70/messenger:${GITHUB_SHA::8} \
-            --verbose          
+            --verbose
+
           az webapp restart --name just-messenger-messages --resource-group JustMessenger
 
       - name: Deploy Web Client
@@ -113,5 +115,6 @@ jobs:
             --name just-messenger-app \
             --resource-group JustMessenger \
             --docker-custom-image-name ghcr.io/ilyam70/web-client:${GITHUB_SHA::8} \
-            --verbose          
+            --verbose
+
           az webapp restart --name just-messenger-app --resource-group JustMessenger
