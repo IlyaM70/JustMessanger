@@ -53,16 +53,19 @@ This architectural choice reflects a **focus on mastering DevOps and distributed
 
 ## 🧠 Tech Stack
 
-| Component                 | Choice                | Rationale                                                    |
-| ------------------------- | --------------------- | ------------------------------------------------------------ |
-| **Language & Framework**  | ASP.NET Core          | Proven performance, developer familiarity, strong ecosystem  |
-| **Real-Time Messaging**   | SignalR               | High-level abstraction for WebSocket communication           |
-| **Primary Storage**       | Azure SQL             | Scalable, cost-effective, reliable for structured data       |
-| **Testing Storage**       | SQLite                | Light, no set up for quick testing       |
-| **CI/CD (Planned)**                 | GitHub Actions        | Simple automation, seamless GitHub integration               |
-| **Unit Testing**          | xUnit & Moq           | Commonly used .NET testing frameworks                        |
-| **Integration Testing (Planned)**   | WebApplicationFactory | Native ASP.NET Core support for integration tests            |
-| **Frontend (Planned)**    | React + React Native  | Strong ecosystem and developer familiarity                   |
+| Component                       | Choice                     | Rationale                                                                 |
+| -------------------------------- | ------------------------- | ------------------------------------------------------------------------- |
+| **Language & Framework**          | ASP.NET Core               | Proven performance, developer familiarity, strong ecosystem               |
+| **Real-Time Messaging**           | SignalR                    | High-level abstraction for WebSocket communication                        |
+| **Primary Storage**               | Azure SQL                  | Scalable, cost-effective, reliable for structured data                    |
+| **Testing Storage**               | SQLite                     | Lightweight, no setup required for quick testing                          |
+| **CI/CD**                         | GitHub Actions             | Fully implemented automation for build, test, Docker, and deployment      |
+| **Unit Testing**                  | xUnit & Moq                | Commonly used .NET testing frameworks                                      |
+| **Integration Testing (Planned)**           | WebApplicationFactory      | Native ASP.NET Core support for integration tests                          |
+| **Frontend**                      | React + React Native       | Strong ecosystem and developer familiarity                                 |
+| **Containerization**              | Docker                     | Consistent environments for local dev, CI/CD, and deployment               |
+| **Container Registry**            | GitHub Container Registry  | Simple integration with GitHub Actions, versioned images                  |
+| **Deployment Target**             | Azure Web Apps (Linux)     | Managed hosting for Docker containers, supports scaling and logs           |
 
 
 ---
@@ -99,8 +102,6 @@ You can view the live demo at:
 APIs are deployed separately as container services in Azure.
 
 ### 📚 Next Steps (Planned)
-- Improve tests
-- Set up CI/CD
 - Improve frontend UI/UX
 - Mobile client
 - Notification service
