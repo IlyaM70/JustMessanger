@@ -6,9 +6,9 @@ permissions:
 
 on:
   push:
-    branches: ["main", "ci-cd-test"]
+    branches: ["master", "ci-cd-test"]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
 
